@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using MelonLoader;
@@ -28,6 +29,10 @@ namespace BapbapMods.Manager
         private MelonLogger.Instance _log;
         private string _userDataDir;
         private string _gameRoot;
+
+        /// The mods MelonLoader actually loaded. A receipt only exists for mods installed
+        /// through this manager, so without this every hand-installed mod looked missing.
+        private Func<List<ModEntry>> _installedMods;
 
         public BrowseScreen Screen { get; private set; } = BrowseScreen.List;
 
@@ -50,11 +55,50 @@ namespace BapbapMods.Manager
         /// Raised whenever anything the UI draws has changed, so the page can rebuild.
         public Action OnChanged;
 
-        public void Init(MelonLogger.Instance log, string userDataDir, string gameRoot)
+        public void Init(MelonLogger.Instance log, string userDataDir, string gameRoot,
+                         Func<List<ModEntry>> installedMods = null)
         {
             _log = log;
             _userDataDir = userDataDir;
             _gameRoot = gameRoot;
+            _installedMods = installedMods;
+        }
+
+        /// Names are compared loosely because the same mod is named differently in the two
+        /// places: BAPHub's catalog calls it "BAPBAP More Custom Settings", its assembly
+        /// announces "MoreCustomSettings". Strip case, spaces and the BAPBAP prefix.
+        internal static string NormaliseName(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return "";
+
+            var sb = new System.Text.StringBuilder(value.Length);
+            foreach (char c in value)
+                if (char.IsLetterOrDigit(c)) sb.Append(char.ToLowerInvariant(c));
+
+            string s = sb.ToString();
+            if (s.StartsWith("bapbap")) s = s.Substring(6);
+            return s;
+        }
+
+        /// The loaded mod matching this package, or null.
+        private ModEntry MatchLoaded(CatalogPackage package)
+        {
+            if (package == null || _installedMods == null) return null;
+
+            var entries = _installedMods();
+            if (entries == null) return null;
+
+            string wanted = NormaliseName(package.Name);
+            if (wanted.Length == 0) return null;
+
+            foreach (var entry in entries)
+            {
+                if (NormaliseName(entry.DisplayName) == wanted) return entry;
+                if (NormaliseName(entry.Id) == wanted) return entry;
+                if (!string.IsNullOrEmpty(entry.DllName) &&
+                    NormaliseName(Path.GetFileNameWithoutExtension(entry.DllName)) == wanted) return entry;
+            }
+            return null;
         }
 
         private void Changed() => OnChanged?.Invoke();
@@ -62,20 +106,29 @@ namespace BapbapMods.Manager
         // ---- state helpers used by the renderer -------------------------------------
 
         public bool IsInstalled(CatalogPackage p) =>
-            p != null && Installed.ContainsKey(p.Id);
+            p != null && (Installed.ContainsKey(p.Id) || MatchLoaded(p) != null);
 
         /// True when we hold an older version than the catalog offers.
         public bool HasUpdate(CatalogPackage p)
         {
-            if (p == null || !Installed.TryGetValue(p.Id, out var receipt)) return false;
-            return !string.IsNullOrEmpty(p.LatestVersion) &&
-                   !string.Equals(receipt.Version, p.LatestVersion, StringComparison.OrdinalIgnoreCase);
+            if (p == null || string.IsNullOrEmpty(p.LatestVersion)) return false;
+
+            if (Installed.TryGetValue(p.Id, out var receipt))
+                return !string.Equals(receipt.Version, p.LatestVersion, StringComparison.OrdinalIgnoreCase);
+
+            // Installed by hand: compare against what the assembly reports.
+            var loaded = MatchLoaded(p);
+            if (loaded != null && !string.IsNullOrEmpty(loaded.Version))
+                return !string.Equals(loaded.Version, p.LatestVersion, StringComparison.OrdinalIgnoreCase);
+
+            return false;
         }
 
         public string ActionLabel(CatalogPackage p)
         {
             if (HasUpdate(p)) return "UPDATE";
-            if (IsInstalled(p)) return "REMOVE";
+            if (p != null && Installed.ContainsKey(p.Id)) return "REMOVE";
+            if (IsInstalled(p)) return "INSTALLED";   // present, but not ours to remove
             return "INSTALL";
         }
 

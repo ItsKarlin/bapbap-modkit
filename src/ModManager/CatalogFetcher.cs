@@ -234,9 +234,15 @@ namespace BapbapMods.Manager
             if (!text.Ok) return FetchResult<VersionManifest>.Fail(text.Error);
 
             var manifest = Catalog.ParseVersion(text.Value);
-            return manifest == null
-                ? FetchResult<VersionManifest>.Fail("version manifest did not parse")
-                : FetchResult<VersionManifest>.Good(manifest);
+            if (manifest == null)
+                return FetchResult<VersionManifest>.Fail("version manifest did not parse");
+
+            // sourcePath entries are relative to the manifest's own folder, so remember it.
+            string url = package.VersionManifestUrl;
+            int slash = url.LastIndexOf('/');
+            manifest.BaseUrl = slash > 0 ? url.Substring(0, slash + 1) : package.BaseUrl;
+
+            return FetchResult<VersionManifest>.Good(manifest);
         }
     }
 }

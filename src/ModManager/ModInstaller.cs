@@ -88,7 +88,10 @@ namespace BapbapMods.Manager
                     if (!Catalog.IsSafeTargetPath(gameRoot, file.TargetPath, out string finalPath))
                         return InstallReport.Fail($"unsafe target path: {file.TargetPath}");
 
-                    string url = CatalogPackage.Combine(package.BaseUrl, file.SourcePath);
+                    // Relative to the version manifest's folder, NOT the catalog root.
+                    string fileBase = string.IsNullOrEmpty(manifest.BaseUrl)
+                        ? package.BaseUrl : manifest.BaseUrl;
+                    string url = CatalogPackage.Combine(fileBase, file.SourcePath);
                     string stagedPath = Path.Combine(staging, SafeFileName(file.TargetPath));
 
                     var got = await downloader(url, stagedPath, file.Sha256, token).ConfigureAwait(false);

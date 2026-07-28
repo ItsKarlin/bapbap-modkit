@@ -66,8 +66,16 @@ namespace BapbapMods.Manager
 
             // The browse tab owns its own state; when that state changes the page redraws.
             Browse.Init(log, MelonEnvironment.UserDataDirectory,
-                        Path.GetDirectoryName(MelonEnvironment.ModsDirectory));
-            Browse.OnChanged = () => { if (Visible) Rebuild(); };
+                        Path.GetDirectoryName(MelonEnvironment.ModsDirectory),
+                        () => _entries);
+
+            // Redraw ONLY when our own page is on screen and showing the browse tab. A network
+            // callback that fires while the user is elsewhere in the game must not rebuild UI
+            // underneath them.
+            Browse.OnChanged = () =>
+            {
+                if (Visible && _browseMode && _viewMod == null) Rebuild();
+            };
         }
 
         public void Reset()

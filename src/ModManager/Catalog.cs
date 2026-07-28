@@ -34,6 +34,10 @@ namespace BapbapMods.Manager
         public string VersionManifestTemplate;
 
         public bool Enabled = true;
+
+        /// Package ids to drop from this source. Data, not code, so hiding something never
+        /// means a new build.
+        public List<string> Exclude = new List<string>();
     }
 
     public class CatalogRequirement
@@ -90,6 +94,10 @@ namespace BapbapMods.Manager
     {
         public string Id;
         public string Version;
+
+        /// The folder version.json itself lives in. sourcePath entries are relative to THIS,
+        /// not to the catalog root — BAPHub stores payloads next to each version manifest.
+        public string BaseUrl;
         public List<CatalogFileEntry> Files = new List<CatalogFileEntry>();
     }
 
@@ -126,6 +134,7 @@ namespace BapbapMods.Manager
 
                 string id = Str(obj["id"]);
                 if (string.IsNullOrEmpty(id)) continue;
+                if (IsExcluded(source, id)) continue;
 
                 var pkg = new CatalogPackage
                 {
@@ -196,7 +205,8 @@ namespace BapbapMods.Manager
     { ""sourceId"": ""baphub"", ""displayName"": ""BAPHub"",
       ""baseUrl"": ""https://raw.githubusercontent.com/Sonic0810/BAPBAPLauncher/main/manifest/channels/release/"",
       ""packagesPath"": ""packages.json"",
-      ""versionManifestTemplate"": ""{id}/versions/{version}/version.json"", ""enabled"": true }
+      ""versionManifestTemplate"": ""{id}/versions/{version}/version.json"", ""enabled"": true,
+      ""exclude"": [ ""sonic.bapbap.br-ui-old-but-gold"" ] }
   ]
 }";
 
@@ -217,6 +227,14 @@ namespace BapbapMods.Manager
             catch { }
 
             return ParseSources(DefaultSourcesJson);
+        }
+
+        private static bool IsExcluded(SourceDescriptor source, string packageId)
+        {
+            if (source.Exclude == null) return false;
+            foreach (string excluded in source.Exclude)
+                if (string.Equals(excluded, packageId, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
         }
 
         /// Reads sources.json. Order is trust order — see Merge.
@@ -245,7 +263,7 @@ namespace BapbapMods.Manager
 
                 var enabled = obj["enabled"];
 
-                list.Add(new SourceDescriptor
+                var descriptor = new SourceDescriptor
                 {
                     SourceId = id,
                     DisplayName = Str(obj["displayName"]) ?? id,
@@ -253,7 +271,16 @@ namespace BapbapMods.Manager
                     PackagesPath = Str(obj["packagesPath"]) ?? "packages.json",
                     VersionManifestTemplate = Str(obj["versionManifestTemplate"]),
                     Enabled = enabled == null || enabled.Type != JTokenType.Boolean || (bool)enabled
-                });
+                };
+
+                if (obj["exclude"] is JArray excluded)
+                    foreach (var e in excluded)
+                    {
+                        string excludedId = Str(e);
+                        if (!string.IsNullOrEmpty(excludedId)) descriptor.Exclude.Add(excludedId);
+                    }
+
+                list.Add(descriptor);
             }
 
             return list;
