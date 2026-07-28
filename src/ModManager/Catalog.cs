@@ -185,6 +185,40 @@ namespace BapbapMods.Manager
             return result;
         }
 
+        /// Shipped inside the manager so the downloader works on a fresh install with no
+        /// bootstrap request. A user file overrides it; see LoadSources.
+        public const string DefaultSourcesJson = @"{
+  ""schemaVersion"": 1,
+  ""sources"": [
+    { ""sourceId"": ""modkit"", ""displayName"": ""Modkit"",
+      ""baseUrl"": ""https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/"",
+      ""packagesPath"": ""catalog/catalog.json"", ""enabled"": true },
+    { ""sourceId"": ""baphub"", ""displayName"": ""BAPHub"",
+      ""baseUrl"": ""https://raw.githubusercontent.com/Sonic0810/BAPBAPLauncher/main/manifest/channels/release/"",
+      ""packagesPath"": ""packages.json"",
+      ""versionManifestTemplate"": ""{id}/versions/{version}/version.json"", ""enabled"": true }
+  ]
+}";
+
+        /// The sources the downloader will use. A file at
+        /// UserData/bapbap-catalog-sources.json wins, so anyone can add a source, reorder trust
+        /// or disable one without a new build. Falls back to the shipped defaults.
+        public static List<SourceDescriptor> LoadSources(string userDataDir)
+        {
+            try
+            {
+                string path = Path.Combine(userDataDir, "bapbap-catalog-sources.json");
+                if (File.Exists(path))
+                {
+                    var custom = ParseSources(File.ReadAllText(path));
+                    if (custom.Count > 0) return custom;
+                }
+            }
+            catch { }
+
+            return ParseSources(DefaultSourcesJson);
+        }
+
         /// Reads sources.json. Order is trust order — see Merge.
         public static List<SourceDescriptor> ParseSources(string json)
         {

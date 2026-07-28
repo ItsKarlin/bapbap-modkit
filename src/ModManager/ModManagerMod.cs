@@ -94,18 +94,9 @@ namespace BapbapMods.Manager
                 var problems = new List<string>();
                 try
                 {
-                    string sourcesUrl =
-                        "https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/catalog/sources.json";
-
-                    var sourcesText = await CatalogFetcher.GetTextAsync(sourcesUrl).ConfigureAwait(false);
-                    if (!sourcesText.Ok)
-                    {
-                        Report($"sources fetch FAILED: {sourcesText.Error}", started);
-                        return;
-                    }
-
-                    var sources = Catalog.ParseSources(sourcesText.Value);
-                    Report($"sources ok: {sources.Count} configured", started);
+                    // Shipped with the manager, so this needs no network and works offline.
+                    var sources = Catalog.LoadSources(_userDataDir);
+                    Report($"sources ok: {sources.Count} configured (no fetch needed)", started);
 
                     var catalog = await CatalogFetcher.FetchCatalogAsync(sources, problems).ConfigureAwait(false);
                     if (!catalog.Ok)
