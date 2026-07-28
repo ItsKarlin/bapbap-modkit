@@ -74,14 +74,29 @@ written back to `UserData/<YourAssemblyName>.ini`.
 | `key` | **yes** | string | — | The ini key this controls. Entries without a `key` are skipped. |
 | `label` | no | string | the key | Shown in the UI. |
 | `description` | no | string | `""` | One-line help under the control. |
-| `type` | no | `bool` \| `text` \| `float` | `float` | Anything unrecognised is treated as `float`. |
+| `type` | no | `bool` \| `choice` \| `key` \| `text` \| `float` | `float` | Anything unrecognised is treated as `float`. |
+| `options` | no | array of strings | — | Values for a `choice`. Providing it makes the setting a choice whatever `type` says. |
 | `min` | no | number | `0` | `float` only. |
 | `max` | no | number | `100` | `float` only. |
 | `step` | no | number | `(max-min)/20`, floor `0.05` | `float` only. |
 | `scope` | no | `client` \| `host` | `client` | See below. Anything other than `host` reads as `client`. |
 
-`text` settings are displayed read-only — the manager will not invent a keyboard for a free-form
-string. Use `bool` or `float` for anything you want changed in-game.
+**`choice` is what you almost certainly want instead of `text`.** Give it an `options` list and
+the manager renders a button that cycles through them. Real settings are nearly always a fixed set
+— `Aggressive`/`Minimal`, `HpOverMax` — not free prose.
+
+```json
+{ "key": "ShowFormat", "label": "HP display", "type": "choice",
+  "options": ["HpOverMax", "HpOnly", "Percent"] }
+```
+
+**`key` is a keybind.** The manager shows the current key; tap it, press any key to rebind, Escape
+to cancel. You get this **for free with no descriptor at all** — any setting whose name contains
+"key" and whose value parses as a Unity key name is detected automatically, which is why
+`ToggleKey=F1` is already rebindable.
+
+`text` remains read-only: there is no keyboard entry in this UI, and a setting that genuinely
+needs free prose is better edited in the file.
 
 ### `scope`
 

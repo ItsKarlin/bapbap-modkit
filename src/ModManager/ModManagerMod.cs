@@ -171,6 +171,8 @@ namespace BapbapMods.Manager
             // Returns on a single volatile read when no network callback is waiting.
             MainThread.Drain(ex => LoggerInstance.Error($"[{ExperimentId}] main-thread callback failed: {ex}"));
 
+            _settingsTab.TickRebind();
+
             if (Input.GetKeyDown(CatalogProbeKey)) RunCatalogProbe();
 
             // F7: dump the settings window's real state. Key-triggered, so it costs nothing

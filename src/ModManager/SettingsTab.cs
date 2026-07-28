@@ -47,6 +47,35 @@ namespace BapbapMods.Manager
         /// True when the game's settings window is on screen. Our full-bleed page must not be
         /// visible at the same time: it renders over the lobby, so with the settings window up
         /// the two overlap and the settings panel looks broken.
+        private SettingDescriptor _rebinding;
+        private TextHolder _rebindHolder;
+
+        /// While waiting for a keybind, swallow the next key pressed and store its name.
+        /// Costs one bool check per frame when not rebinding.
+        public void TickRebind()
+        {
+            if (_rebinding == null) return;
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (_rebindHolder?.Text != null)
+                    _rebindHolder.Text.text = IniStore.ReadRaw(_rebinding.IniFile, _rebinding.Key, "-");
+                _rebinding = null; _rebindHolder = null;
+                return;
+            }
+
+            foreach (var code in Enum.GetValues(typeof(KeyCode)))
+            {
+                var key = (KeyCode)code;
+                if (key == KeyCode.None || !Input.GetKeyDown(key)) continue;
+
+                IniStore.Write(_rebinding.IniFile, _rebinding.Key, key.ToString());
+                if (_rebindHolder?.Text != null) _rebindHolder.Text.text = key.ToString();
+                _rebinding = null; _rebindHolder = null;
+                return;
+            }
+        }
+
         public bool IsWindowOpen()
         {
             try
@@ -458,6 +487,44 @@ namespace BapbapMods.Manager
             string scopeTag = s.Scope == ModCategory.HostOnly ? "  [host]" : "";
             var label = MakeText(row.transform, s.Label + scopeTag, FontSize);
             if (label != null) label.gameObject.AddComponent<LayoutElement>().flexibleWidth = 1f;
+
+            // One of a fixed list: tap to cycle. Nearly every "text" setting in the wild is
+            // really this, and a cycling button beats a keyboard in a game UI.
+            if (s.Kind == SettingKind.Choice && s.Options.Count > 0)
+            {
+                string current = IniStore.ReadRaw(s.IniFile, s.Key, s.RawValue ?? "");
+                var holder = new TextHolder();
+
+                MakeSmallButton(row.transform, string.IsNullOrEmpty(current) ? "-" : current, 200f, () =>
+                {
+                    string now = IniStore.ReadRaw(s.IniFile, s.Key, s.Options[0]);
+
+                    int index = -1;
+                    for (int i = 0; i < s.Options.Count; i++)
+                        if (string.Equals(s.Options[i], now, StringComparison.OrdinalIgnoreCase)) { index = i; break; }
+
+                    string next = s.Options[(index + 1) % s.Options.Count];
+                    IniStore.Write(s.IniFile, s.Key, next);
+                    if (holder.Text != null) holder.Text.text = next;
+                }, holder);
+                return;
+            }
+
+            // A keybind: tap, then press a key. Works with no descriptor, because a value that
+            // parses as a key name is detected on its own.
+            if (s.Kind == SettingKind.Key)
+            {
+                string current = IniStore.ReadRaw(s.IniFile, s.Key, s.RawValue ?? "");
+                var holder = new TextHolder();
+
+                MakeSmallButton(row.transform, string.IsNullOrEmpty(current) ? "-" : current, 200f, () =>
+                {
+                    _rebinding = s;
+                    _rebindHolder = holder;
+                    if (holder.Text != null) holder.Text.text = "press a key…";
+                }, holder);
+                return;
+            }
 
             if (s.Kind == SettingKind.Text)
             {

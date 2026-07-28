@@ -26,7 +26,18 @@ namespace BapbapMods.Manager
     {
         Float,
         Bool,
-        Text
+
+        /// Free text. Shown read-only — there is no keyboard entry in this UI, and almost no
+        /// real setting actually wants one.
+        Text,
+
+        /// One of a fixed list. Tap to cycle. This is what nearly every "text" setting in the
+        /// wild really is: Aggressive/Minimal, HpOverMax, Type…
+        Choice,
+
+        /// A key name. Tap, then press a key. Detected automatically from the value, so keybinds
+        /// are editable even with no descriptor.
+        Key
     }
 
     public class SettingDescriptor
@@ -41,6 +52,9 @@ namespace BapbapMods.Manager
         public float Min = 0f;
         public float Max = 100f;
         public float Step = 0.1f;
+
+        /// For Choice: the values to cycle through, in order.
+        public List<string> Options = new List<string>();
 
         public string RawValue;
     }
@@ -91,10 +105,18 @@ namespace BapbapMods.Manager
                         Description = JsonValue(chunk, "description") ?? "",
                     };
 
+                    foreach (string option in JsonArray(chunk, "options"))
+                        d.Options.Add(option);
+
                     string type = (JsonValue(chunk, "type") ?? "").ToLowerInvariant();
-                    d.Kind = type == "bool" ? SettingKind.Bool
-                           : type == "text" ? SettingKind.Text
+                    d.Kind = type == "bool"   ? SettingKind.Bool
+                           : type == "key"    ? SettingKind.Key
+                           : type == "choice" ? SettingKind.Choice
+                           : type == "text"   ? SettingKind.Text
                            : SettingKind.Float;
+
+                    // An options list means a picker, whatever the author called the type.
+                    if (d.Options.Count > 0) d.Kind = SettingKind.Choice;
 
                     string scope = (JsonValue(chunk, "scope") ?? "client").ToLowerInvariant();
                     d.Scope = scope == "host" ? ModCategory.HostOnly : ModCategory.ClientSide;
@@ -163,9 +185,13 @@ namespace BapbapMods.Manager
                               : magnitude * 2f;
                         d.Step = magnitude <= 2f ? 0.1f : magnitude <= 50f ? 1f : 5f;
                     }
+                    else if (LooksLikeKeyName(key, value))
+                    {
+                        d.Kind = SettingKind.Key;
+                    }
                     else
                     {
-                        d.Kind = SettingKind.Text; // shown read-only
+                        d.Kind = SettingKind.Text; // read-only without an options list
                     }
 
                     list.Add(d);
@@ -178,6 +204,15 @@ namespace BapbapMods.Manager
         }
 
         // ---- helpers ---------------------------------------------------------------
+
+        /// A keybind, guessed from the name and a value that parses as a Unity key. Lets
+        /// ToggleKey be rebound in-game even when the mod ships no descriptor.
+        private static bool LooksLikeKeyName(string key, string value)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length > 20) return false;
+            if (key.IndexOf("key", StringComparison.OrdinalIgnoreCase) < 0) return false;
+            return Enum.TryParse(typeof(UnityEngine.KeyCode), value, true, out _);
+        }
 
         /// "EnableCrashForensics" -> "Enable crash forensics"
         private static string Humanise(string key)
@@ -214,6 +249,36 @@ namespace BapbapMods.Manager
                     if (depth == 0 && start >= 0) yield return json.Substring(start, i - start + 1);
                 }
             }
+        }
+
+        /// Reads a flat ["a","b"] array. Enough for an options list.
+        private static List<string> JsonArray(string obj, string key)
+        {
+            var list = new List<string>();
+            string needle = "\"" + key + "\"";
+
+            int k = obj.IndexOf(needle, StringComparison.OrdinalIgnoreCase);
+            if (k < 0) return list;
+
+            int open = obj.IndexOf('[', k + needle.Length);
+            if (open < 0) return list;
+            int close = obj.IndexOf(']', open);
+            if (close < 0) return list;
+
+            string body = obj.Substring(open + 1, close - open - 1);
+            int i = 0;
+            while (i < body.Length)
+            {
+                int q1 = body.IndexOf('"', i);
+                if (q1 < 0) break;
+                int q2 = body.IndexOf('"', q1 + 1);
+                if (q2 < 0) break;
+
+                string value = body.Substring(q1 + 1, q2 - q1 - 1);
+                if (value.Length > 0) list.Add(value);
+                i = q2 + 1;
+            }
+            return list;
         }
 
         private static string JsonValue(string obj, string key)
