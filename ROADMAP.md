@@ -45,7 +45,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ✅ **Pointer for cards and menus** — own overlay canvas at sortingOrder 30000, above menus, never eats clicks. DONE (2026-07-28 01:20:00)
 - ✅ **Crosshair hidden** during play. DONE (2026-07-28 01:05:00)
 - ✅ **Camera settings** — FOV, sensitivity, height, pitch, live-reloaded from the ini. DONE (2026-07-28 03:10:00)
-- ✅ **v1.0.1 — ini migration** — an ini from an older build now gains keys added since, values preserved. Verified offline against the real stale ini with a 15-check probe (migration, idempotency, edited-values-survive, up-to-date-file-untouched, absent-file-creates-default) before deploying. Awaiting in-game confirmation. DONE (2026-07-28 07:30:00)
+- ✅ **v1.0.1 — ini migration** — an ini from an older build now gains keys added since, values preserved. Verified offline against the real stale ini with a 15-check probe (migration, idempotency, edited-values-survive, up-to-date-file-untouched, absent-file-creates-default), then **confirmed in-game 07:42**: migrated exactly once, `PointerSize`/`PointerSortingOrder` intact, no reload spam, no rewrite loop, no errors. DONE (2026-07-28 07:30:00)
 
 ## ACT 4 · Distribution (IN PROGRESS)
 - ✅ **Consolidate sources** — `~/game-mods/` working copies retired to `~/game-mods/retired-worktrees/` and replaced with symlinks into the repo. Both projects verified building from `src/`. DONE (2026-07-28 07:12:00)
