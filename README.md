@@ -67,7 +67,6 @@ Outside the default Linux Steam path, pass `-p:GameDir="C:\...\common\BAPBAP"`.
 
 ## Notes
 
-- **Untested on Windows.** Built and run on Linux under Proton only.
 - The MODS button is dimmer than the game's own tabs, and the previously selected tab keeps its
   marker while the page is open. Both cosmetic.
 - Occasional frame spike with the full BAPHub mod set installed.

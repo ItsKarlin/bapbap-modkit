@@ -53,8 +53,9 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ✅ **One-line installer** — `install/install.ps1` and `install/install.sh`. Finds the game via Steam's `appmanifest`/`libraryfolders.vdf` (not a guessed folder name), sha256-verifies every download against `dist/manifest.json`, and stages everything before touching `Mods/`. DONE (2026-07-28 07:18:00)
 - ✅ **Installer offers MelonLoader** — if none is found, downloads the BAPHub-pinned `0.7.2-ci.2388` from `Sonic0810/BAPBAPLauncher`, sha256-verified, extracted into the game folder; prints the Proton `WINEDLLOVERRIDES` reminder afterwards. Existing installs of another version are left alone with a warning. DONE (2026-07-28 07:19:00)
 - ✅ **Document the settings schema** — `docs/settings-schema.md`: ini inference, the `<ModDll>.settings.json` descriptor, every field, and the parser's limits. DONE (2026-07-28 07:15:00)
-- ⬜ **Flip the repo public** — installers and README already point at `ItsKarlin/bapbap-modkit`; the one-line commands only work once it is public.
-- ⬜ **Windows verification** — the manager has only ever run under Proton; one friend testing closes every "untested" caveat. The PowerShell installer has never been executed (no `pwsh` on this machine) — only read through.
+- ✅ **Flip the repo public** — live at https://github.com/ItsKarlin/bapbap-modkit. DONE (2026-07-28 07:58:00)
+- ✅ **Linux one-liner verified end-to-end** — ran the real `curl | bash` against the live public repo: found the game, read the pinned loader version, fetched the manifest, verified sha256, correctly reported "already up to date" instead of rewriting. Exit 0, manager only. DONE (2026-07-28 08:00:00)
+- ⬜ **Windows verification** — `install.ps1` has still never been executed anywhere (no `pwsh` here). The untested parts are the Steam registry read and the `libraryfolders.vdf` parse. Needs one friend to run it.
 - ⬜ **A screenshot for the README** — the README currently describes the MODS page in prose.
 
 ## ACT 5 · Mod downloader (NOT STARTED)
@@ -82,6 +83,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **Settings search** — Hidden Dev Arguments alone exposes 60 keys; a filter box would help.
 
 ## Changelog
+- **2026-07-28 08:00:00** — Repo is public and the Linux one-liner is verified end-to-end against it. README trimmed hard (146 → 80 lines) and stripped of everything about Third Person; the mod stays in the repo but is no longer featured anywhere user-facing. BAPFPS references removed entirely.
 - **2026-07-28 07:30:00** — Third Person v1.0.1 fixes the ini-migration bug: `Load()` tracks which keys it saw and rewrites once if any known key is absent, preserving parsed values. Guarded against a rewrite loop (the 2s config watcher would have amplified it) by keeping `KnownKeys` exactly in sync with what `Save()` writes. Verified with an offline probe against the real stale ini, 15 checks, all passing.
 - **2026-07-28 07:26:00** — Third Person unbundled from the installer. `dist/manifest.json` is now the installer payload only (the manager); the Third Person DLL stays hosted in `dist/` as the downloader's first real catalog entry. The modkit installs a manager, not a mod bundle.
 - **2026-07-28 07:21:00** — Distribution act mostly closed. Sources consolidated into the repo (working copies retired, symlinked back), README/LICENSE/settings-schema written, both installers built with sha256 verification and optional MelonLoader install, and the repo pushed private as `ItsKarlin/bapbap-modkit`. Found and logged the Third Person ini-migration bug while checking the docs were truthful.
