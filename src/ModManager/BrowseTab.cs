@@ -127,8 +127,7 @@ namespace BapbapMods.Manager
         public string ActionLabel(CatalogPackage p)
         {
             if (HasUpdate(p)) return "UPDATE";
-            if (p != null && Installed.ContainsKey(p.Id)) return "REMOVE";
-            if (IsInstalled(p)) return "INSTALLED";   // present, but not ours to remove
+            if (IsInstalled(p)) return "REMOVE";
             return "INSTALL";
         }
 
@@ -313,6 +312,29 @@ namespace BapbapMods.Manager
         public void Uninstall(CatalogPackage package, bool deleteSettings = false)
         {
             if (package == null) return;
+
+            // No receipt means it was installed by hand. We still know exactly which file it
+            // is — the loaded assembly names itself — so write a receipt for that one DLL and
+            // remove it through the same validated path as anything else.
+            if (!Installed.ContainsKey(package.Id))
+            {
+                var loaded = MatchLoaded(package);
+                if (loaded == null || string.IsNullOrEmpty(loaded.DllName))
+                {
+                    Error = $"{package.Name}: cannot tell which file to remove.";
+                    Changed();
+                    return;
+                }
+
+                ModInstaller.WriteReceipt(_userDataDir, new InstallReceipt
+                {
+                    PackageId = package.Id,
+                    Name = package.Name,
+                    Version = loaded.Version ?? "",
+                    SourceId = package.SourceId,
+                    Files = new List<string> { Path.Combine(_gameRoot, "Mods", loaded.DllName) }
+                });
+            }
 
             var report = ModInstaller.Uninstall(package.Id, _gameRoot, _userDataDir, deleteSettings);
 

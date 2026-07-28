@@ -206,7 +206,7 @@ namespace BapbapMods.Manager
       ""baseUrl"": ""https://raw.githubusercontent.com/Sonic0810/BAPBAPLauncher/main/manifest/channels/release/"",
       ""packagesPath"": ""packages.json"",
       ""versionManifestTemplate"": ""{id}/versions/{version}/version.json"", ""enabled"": true,
-      ""exclude"": [ ""sonic.bapbap.br-ui-old-but-gold"" ] }
+      ""exclude"": [ ""sonic.bapbap.br-ui-old-but-gold"", ""sonic.bapbap.fps-camera"" ] }
   ]
 }";
 

@@ -43,6 +43,20 @@ namespace BapbapMods.Manager
         private GameObject _textDonor;
 
         private Transform _contentParent;
+
+        /// True when the game's settings window is on screen. Our full-bleed page must not be
+        /// visible at the same time: it renders over the lobby, so with the settings window up
+        /// the two overlap and the settings panel looks broken.
+        public bool IsWindowOpen()
+        {
+            try
+            {
+                return _contentParent != null &&
+                       _contentParent.gameObject != null &&
+                       _contentParent.gameObject.activeInHierarchy;
+            }
+            catch { return false; }
+        }
         private readonly List<GameObject> _otherPanels = new List<GameObject>();
         private GameObject _panelOnOpen;
 

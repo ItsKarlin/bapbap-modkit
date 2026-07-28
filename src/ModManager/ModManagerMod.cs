@@ -36,6 +36,7 @@ namespace BapbapMods.Manager
         /// whether HttpClient works under Proton in this runtime.
         private const KeyCode CatalogProbeKey = KeyCode.F6;
         private bool _probeRunning;
+        private bool _loggedSettingsOverlap;
 
         /// The Mods folder's parent. Every catalog write is confined below this.
         private static string GameRoot => Path.GetDirectoryName(MelonEnvironment.ModsDirectory);
@@ -156,6 +157,19 @@ namespace BapbapMods.Manager
             MainThread.Drain(ex => LoggerInstance.Error($"[{ExperimentId}] main-thread callback failed: {ex}"));
 
             if (Input.GetKeyDown(CatalogProbeKey)) RunCatalogProbe();
+
+            // Our page covers the lobby, so it must never share the screen with the game's
+            // settings window — the two overlap and the settings panel reads as broken.
+            if (_panelOpen && _settingsTab.IsWindowOpen())
+            {
+                _panelOpen = false;
+                _nativePage.Show(false);
+                if (!_loggedSettingsOverlap)
+                {
+                    _loggedSettingsOverlap = true;
+                    LoggerInstance.Msg($"[{ExperimentId}] settings window opened - hid the mods page.");
+                }
+            }
 
             // Re-evaluate match state on a timer rather than every frame — the check walks
             // object lists and does not need 60Hz resolution.
