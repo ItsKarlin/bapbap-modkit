@@ -1,0 +1,13 @@
+# Build output
+obj/
+out/
+bin/
+
+# Editor / OS
+.vs/
+.idea/
+*.user
+.DS_Store
+
+# Local working notes, not for publication
+HANDOFF.md

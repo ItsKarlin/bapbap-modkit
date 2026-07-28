@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "mods": [
+    {
+      "id": "BAPBAP Mods",
+      "file": "BAPBAPModManager.dll",
+      "version": "0.1.0",
+      "author": "ItsKarlin",
+      "scope": "client",
+      "description": "In-game mod manager: discovers installed mods, toggles them, edits their settings.",
+      "size": 61952,
+      "sha256": "588c20f5681a285587610ae78c985ca886693043149d751b7a828d7ea7268157"
+    },
+    {
+      "id": "BAPBAP Third Person",
+      "file": "BAPBAPThirdPerson.dll",
+      "version": "1.0.0",
+      "author": "ItsKarlin",
+      "scope": "client",
+      "description": "Third-person camera. F1 toggles. Pointer for cards and menus.",
+      "size": 16384,
+      "sha256": "686c4a301c54757a4cec7f144d34dde16c63fd87d9fd3c26635d059b3d4cedbd"
+    }
+  ]
+}
