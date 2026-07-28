@@ -11,3 +11,6 @@ bin/
 
 # Local working notes, not for publication
 HANDOFF.md
+
+# Local agent config, not for publication
+.claude/
