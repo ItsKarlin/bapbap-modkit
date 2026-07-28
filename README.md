@@ -46,12 +46,6 @@ MelonLoader can't unload an assembly mid-session.
 Host mods change the game for everyone in the lobby, and guests need nothing installed to be
 affected — so keep them to private lobbies with people who agreed to it.
 
-## Third Person
-
-A third-person camera on `F1` — no crosshair, mouse pointer for card picks, configurable FOV,
-sensitivity, height and pitch. Not installed by the one-liner: grab
-[`dist/BAPBAPThirdPerson.dll`](dist/) and drop it in `BAPBAP/Mods/`.
-
 ## Writing mods
 
 Your mod appears in the manager with no work from you. If it writes
@@ -64,7 +58,7 @@ see [docs/settings-schema.md](docs/settings-schema.md).
 Needs the .NET SDK and a BAPBAP install that's been launched once with MelonLoader.
 
 ```bash
-cd src/ModManager                 # or src/ThirdPerson
+cd src/ModManager
 dotnet build -c Release -o out
 cp out/*.dll "<BAPBAP>/Mods/"
 ```
