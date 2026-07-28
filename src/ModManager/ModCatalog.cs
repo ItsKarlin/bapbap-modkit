@@ -110,6 +110,9 @@ namespace BapbapMods.Manager
             { "BAPBAP Third Person", new ModMeta {
                 Category = ModCategory.ClientSide, Source = ModSource.Local,
                 Description = "Third-person camera. F1 toggles. Pointer for cards and menus." } },
+            { "BAPBAP Round Mutators", new ModMeta {
+                Category = ModCategory.HostOnly, Source = ModSource.Local,
+                Description = "Turns on the game's built-in match modifiers. Changes the match for everyone when you host." } },
             { "BAPBAP Mods", new ModMeta {
                 Category = ModCategory.ClientSide, Source = ModSource.Local,
                 Description = "This mod manager." } }
