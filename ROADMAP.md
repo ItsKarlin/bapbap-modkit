@@ -46,10 +46,14 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ✅ **Camera settings** — FOV, sensitivity, height, pitch, live-reloaded from the ini. DONE (2026-07-28 03:10:00)
 
 ## ACT 4 · Distribution (IN PROGRESS)
-- 🔄 **Public GitHub repo** — MIT, sources + prebuilt DLLs, assembled at `~/projects/bapbap-mods`, not yet committed.
-- ⬜ **One-line installer** — PowerShell for Windows friends, bash for Linux; pulls the latest DLLs into `Mods/`.
-- ⬜ **Document the settings schema** — `<ModDll>.settings.json` so anyone can expose settings without touching manager code.
-- ⬜ **Windows verification** — the manager has only ever run under Proton; one friend testing closes every "untested" caveat.
+- ✅ **Consolidate sources** — `~/game-mods/` working copies retired to `~/game-mods/retired-worktrees/` and replaced with symlinks into the repo. Both projects verified building from `src/`. DONE (2026-07-28 07:12:00)
+- ✅ **GitHub repo** — named **bapbap-modkit**, MIT, sources + prebuilt DLLs + installers. Pushed **private** at the user's request; flip to public when ready. `HANDOFF.md` deliberately excluded (gitignored) — it contains personal notes and home paths. DONE (2026-07-28 07:20:00)
+- ✅ **One-line installer** — `install/install.ps1` and `install/install.sh`. Finds the game via Steam's `appmanifest`/`libraryfolders.vdf` (not a guessed folder name), sha256-verifies every download against `dist/manifest.json`, and stages everything before touching `Mods/`. DONE (2026-07-28 07:18:00)
+- ✅ **Installer offers MelonLoader** — if none is found, downloads the BAPHub-pinned `0.7.2-ci.2388` from `Sonic0810/BAPBAPLauncher`, sha256-verified, extracted into the game folder; prints the Proton `WINEDLLOVERRIDES` reminder afterwards. Existing installs of another version are left alone with a warning. DONE (2026-07-28 07:19:00)
+- ✅ **Document the settings schema** — `docs/settings-schema.md`: ini inference, the `<ModDll>.settings.json` descriptor, every field, and the parser's limits. DONE (2026-07-28 07:15:00)
+- ⬜ **Flip the repo public** — installers and README already point at `ItsKarlin/bapbap-modkit`; the one-line commands only work once it is public.
+- ⬜ **Windows verification** — the manager has only ever run under Proton; one friend testing closes every "untested" caveat. The PowerShell installer has never been executed (no `pwsh` on this machine) — only read through.
+- ⬜ **A screenshot for the README** — the README currently describes the MODS page in prose.
 
 ## ACT 5 · Mod downloader (NOT STARTED)
 - ⬜ **Browse available mods in-game** — merged BAPHub + our own manifest, showing Installed / Install / Update.
@@ -64,6 +68,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **Shuffle** — auto-randomize map and gamemode between rounds.
 
 ## Known issues / accepted compromises
+- 🐞 **Third Person never migrates an existing ini.** `Save()` only runs when the file is missing, so an ini written before the camera settings existed never gains `FovMultiplier`, `Sensitivity`, `CameraHeight` or `CameraPitch` — and the manager, which reads the ini, therefore cannot show them. Anyone who installed before 2026-07-28 03:10 is affected, including this machine. Workaround in the README (delete the ini). **Fix: after parsing, rewrite the file if any known key was absent.** Found 2026-07-28 07:14:00.
 - ⚠️ **Nav-bar highlight is dimmer than the game's** — 10+ attempts. A/B dump of two lit tabs proved every readable property is identical (all UberSDF layers, colours, components); the difference is internal SDF shader state with no accessible handle. Accepted.
 - ⚠️ **The previously selected tab keeps its blue marker** while the MODS page is open. Closing the game's page was verified in the log to NOT clear it, and risked a blank lobby, so it was reverted.
 - ⚠️ **Residual stutter, roughly one spike every two minutes** — user-accepted. Arena Random Chars / Asset Dumper / More Custom Settings were never isolated individually; Hidden Dev Arguments is tunable via its ini.
@@ -75,6 +80,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **Settings search** — Hidden Dev Arguments alone exposes 60 keys; a filter box would help.
 
 ## Changelog
+- **2026-07-28 07:21:00** — Distribution act mostly closed. Sources consolidated into the repo (working copies retired, symlinked back), README/LICENSE/settings-schema written, both installers built with sha256 verification and optional MelonLoader install, and the repo pushed private as `ItsKarlin/bapbap-modkit`. Found and logged the Third Person ini-migration bug while checking the docs were truthful.
 - **2026-07-28 04:28:06** — Roadmap initialized. Captures the full first build session: recon, manager, settings system, Third Person mod, and the open distribution/downloader work.
 - **2026-07-28 04:26:00** — Nav-bar highlight investigation closed. A/B dump of two simultaneously lit tabs showed the only readable difference was label alpha; matched that and accepted the remaining visual gap.
 - **2026-07-28 03:50:00** — Manager restyled to the game's palette; page made scrollable and full-bleed.
