@@ -38,6 +38,12 @@ namespace BapbapMods.Manager
         private bool _probeRunning;
         private bool _loggedSettingsOverlap;
 
+        /// True for the manager's own entry, matched on the assembly rather than a name that
+        /// could be edited.
+        private static bool IsSelf(ModEntry entry) =>
+            entry != null && !string.IsNullOrEmpty(entry.DllName) &&
+            entry.DllName.Equals("BAPBAPModManager.dll", StringComparison.OrdinalIgnoreCase);
+
         /// The Mods folder's parent. Every catalog write is confined below this.
         private static string GameRoot => Path.GetDirectoryName(MelonEnvironment.ModsDirectory);
 
@@ -284,6 +290,16 @@ namespace BapbapMods.Manager
         // native switch can snap back to its previous state.
         private bool HandleNativeToggle(ModEntry entry, bool value)
         {
+            // Disabling the manager would park its own DLL in Mods/disabled/, so next launch
+            // there is no manager and no UI left to switch it back on. Refuse, and say how to
+            // do it deliberately.
+            if (!value && IsSelf(entry))
+            {
+                _status = "This is the mod manager. Delete its DLL from Mods/ to remove it.";
+                LoggerInstance.Msg($"[{ExperimentId}] refused to disable itself.");
+                return false;
+            }
+
             // Option A: unrecognised mods stay toggleable; only confirmed host mods lock.
             if (entry.Category == ModCategory.HostOnly && MatchState.HostEditingLocked)
             {
