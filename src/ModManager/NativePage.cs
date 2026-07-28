@@ -12,8 +12,10 @@
 // as any other.
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 using MelonLoader;
+using MelonLoader.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 using Il2CppInterop.Runtime;
@@ -30,6 +32,11 @@ namespace BapbapMods.Manager
 
         private GameObject _page;
         private Transform _contentRoot;
+        private bool _browseMode;
+        internal readonly BrowseTab Browse = new BrowseTab();
+
+        /// Where rows are built. BrowseTab renders into this too.
+        internal Transform ContentRoot => _contentRoot;
         private Transform _pagesContainer;
 
         private GameObject _toggleTemplate;
@@ -53,7 +60,15 @@ namespace BapbapMods.Manager
         private List<ModEntry> _entries = new List<ModEntry>();
         private Func<ModEntry, bool, bool> _onToggle;
 
-        public void Init(MelonLogger.Instance log) => _log = log;
+        public void Init(MelonLogger.Instance log)
+        {
+            _log = log;
+
+            // The browse tab owns its own state; when that state changes the page redraws.
+            Browse.Init(log, MelonEnvironment.UserDataDirectory,
+                        Path.GetDirectoryName(MelonEnvironment.ModsDirectory));
+            Browse.OnChanged = () => { if (Visible) Rebuild(); };
+        }
 
         public void Reset()
         {
@@ -664,8 +679,9 @@ namespace BapbapMods.Manager
             for (int i = _contentRoot.childCount - 1; i >= 0; i--)
                 UnityEngine.Object.DestroyImmediate(_contentRoot.GetChild(i).gameObject);
 
-            if (_viewMod == null) Populate(_entries, _onToggle);
-            else PopulateSettings(_viewMod);
+            if (_viewMod != null) PopulateSettings(_viewMod);
+            else if (_browseMode) PopulateBrowse();
+            else Populate(_entries, _onToggle);
         }
 
         /// One mod's settings, with a Back button — same shape as the settings-menu tab.
@@ -953,10 +969,49 @@ namespace BapbapMods.Manager
             return inner.transform;
         }
 
+        /// INSTALLED | BROWSE. The active tab is highlighted; the other is a button.
+        private void AddTabStrip()
+        {
+            var strip = new GameObject("Tabs");
+            strip.transform.SetParent(_contentRoot, false);
+            var le = strip.AddComponent<LayoutElement>();
+            le.minHeight = 44f;
+            le.preferredHeight = 44f;
+
+            var layout = strip.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 10f;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+
+            AddTabButton(strip.transform, "INSTALLED", !_browseMode, () => SetBrowseMode(false));
+            AddTabButton(strip.transform, "BROWSE", _browseMode, () => SetBrowseMode(true));
+        }
+
+        private void AddTabButton(Transform parent, string text, bool active, Action onClick)
+        {
+            var pair = MakeButton(parent, text, 170f, active ? (Action)null : onClick);
+            if (pair == null) return;
+
+            var img = pair.Item1 != null ? pair.Item1.GetComponent<Image>() : null;
+            if (img != null) img.color = active ? Palette.Highlight : Palette.Row;
+            if (pair.Item2 != null)
+                pair.Item2.color = active ? Palette.PageBackground : Palette.TextMuted;
+        }
+
+        internal void SetBrowseMode(bool browse)
+        {
+            if (_browseMode == browse) return;
+            _browseMode = browse;
+            if (browse) Browse.Load();
+            Rebuild();
+        }
+
         private void Populate(List<ModEntry> entries, Func<ModEntry, bool, bool> onToggle)
         {
             var title = AddLabel("MODS", 40f);
             if (title != null) title.color = Palette.Highlight;
+            AddTabStrip();
             AddLabel("", 8f);
 
             var h1 = AddLabel("HOST-ONLY — affects everyone in your lobby", 22f);
@@ -984,7 +1039,224 @@ namespace BapbapMods.Manager
             }
         }
 
-        private TextMeshProUGUI AddLabel(string text, float size)
+        // ---- browse tab ------------------------------------------------------------
+
+        private void PopulateBrowse()
+        {
+            var title = AddLabel("MODS", 40f);
+            if (title != null) title.color = Palette.Highlight;
+            AddTabStrip();
+            AddLabel("", 8f);
+
+            switch (Browse.Screen)
+            {
+                case BrowseScreen.Confirm: PopulateConfirm(); return;
+                case BrowseScreen.Busy:    PopulateBusy();    return;
+            }
+
+            if (Browse.Loading)
+            {
+                var loading = AddLabel("Loading catalog...", 24f);
+                if (loading != null) loading.color = Palette.TextMuted;
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(Browse.Error))
+            {
+                var err = AddLabel(Browse.Error, 22f);
+                if (err != null) err.color = Palette.Highlight;
+                AddLabel("", 8f);
+                var retry = MakeButton(_contentRoot, "RETRY", 170f, () => Browse.Load(true));
+                if (retry != null && retry.Item1 != null)
+                {
+                    var ri = retry.Item1.GetComponent<Image>();
+                    if (ri != null) ri.color = Palette.Accent;
+                }
+                return;
+            }
+
+            if (Browse.Packages == null || Browse.Packages.Count == 0)
+            {
+                var empty = AddLabel("No mods available.", 24f);
+                if (empty != null) empty.color = Palette.TextMuted;
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(Browse.Status))
+            {
+                var status = AddLabel(Browse.Status, 20f);
+                if (status != null) status.color = Palette.TextMuted;
+            }
+            AddLabel("", 6f);
+
+            foreach (var package in Browse.Packages) AddBrowseRow(package);
+
+            foreach (string note in Browse.Notes)
+            {
+                var n = AddLabel(note, 16f);
+                if (n != null) n.color = Palette.TextMuted;
+            }
+        }
+
+        private void AddBrowseRow(CatalogPackage package)
+        {
+            var row = new GameObject($"Browse_{package.Id}");
+            row.transform.SetParent(_contentRoot, false);
+
+            var le = row.AddComponent<LayoutElement>();
+            le.minHeight = 62f;
+            le.preferredHeight = 62f;
+
+            var img = row.AddComponent<Image>();
+            img.color = Browse.IsInstalled(package) ? Palette.RowEnabled : Palette.Row;
+
+            var layout = row.AddComponent<HorizontalLayoutGroup>();
+            var pad = new RectOffset();
+            pad.left = 14; pad.right = 14; pad.top = 6; pad.bottom = 6;
+            layout.padding = pad;
+            layout.spacing = 12f;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = true;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+
+            string version = string.IsNullOrEmpty(package.LatestVersion) ? "" : "  v" + package.LatestVersion;
+            var label = AddRowLabel(row.transform, package.Name + version);
+            if (label != null)
+            {
+                label.fontSize = 22f;
+                var fit = label.gameObject.GetComponent<LayoutElement>();
+                if (fit == null) fit = label.gameObject.AddComponent<LayoutElement>();
+                fit.flexibleWidth = 1f;
+            }
+
+            // Source and scope, so it is obvious where a mod came from and who it affects.
+            string source = string.IsNullOrEmpty(package.SourceDisplayName) ? "" : package.SourceDisplayName;
+            var meta = AddRowLabel(row.transform, source + "  -  " + Browse.ScopeLabel(package));
+            if (meta != null)
+            {
+                meta.fontSize = 16f;
+                meta.color = package.ScopeKnown && package.Scope == ModCategory.HostOnly
+                    ? Palette.Highlight : Palette.TextMuted;
+                var ml = meta.gameObject.GetComponent<LayoutElement>();
+                if (ml == null) ml = meta.gameObject.AddComponent<LayoutElement>();
+                ml.preferredWidth = 280f;
+            }
+
+            // Anything the catalog flagged. Rendered from requirements[], never hardcoded.
+            var warnings = BrowseTab.WarningsFor(package);
+            if (warnings.Count > 0)
+            {
+                var warn = AddRowLabel(row.transform, warnings.Count == 1 ? "!" : $"! {warnings.Count}");
+                if (warn != null)
+                {
+                    warn.fontSize = 20f;
+                    warn.color = Palette.Highlight;
+                    var wl = warn.gameObject.GetComponent<LayoutElement>();
+                    if (wl == null) wl = warn.gameObject.AddComponent<LayoutElement>();
+                    wl.preferredWidth = 40f;
+                }
+            }
+
+            string action = Browse.ActionLabel(package);
+            var button = MakeButton(row.transform, action, 130f, () =>
+            {
+                if (action == "REMOVE") Browse.Uninstall(package);
+                else Browse.BeginInstall(package);
+            });
+
+            if (button != null && button.Item1 != null)
+            {
+                var bi = button.Item1.GetComponent<Image>();
+                if (bi != null)
+                    bi.color = action == "REMOVE" ? Palette.RowDisabled : Palette.Accent;
+            }
+        }
+
+        /// What you are about to install, stated plainly, with every warning visible before
+        /// anything is downloaded.
+        private void PopulateConfirm()
+        {
+            var package = Browse.Pending;
+            var version = Browse.PendingVersion;
+            if (package == null || version == null) { Browse.CancelConfirm(); return; }
+
+            var name = AddLabel(package.Name, 30f);
+            if (name != null) name.color = Palette.TextPrimary;
+
+            var sub = AddLabel($"version {version.Version}  -  from {package.SourceDisplayName}", 20f);
+            if (sub != null) sub.color = Palette.TextMuted;
+            AddLabel("", 6f);
+
+            if (!string.IsNullOrEmpty(package.Summary))
+            {
+                var summary = AddLabel(package.Summary, 20f);
+                if (summary != null) summary.color = Palette.TextPrimary;
+                AddLabel("", 6f);
+            }
+
+            var scope = AddLabel(Browse.ScopeLabel(package).ToUpperInvariant(), 22f);
+            if (scope != null)
+                scope.color = package.ScopeKnown && package.Scope == ModCategory.ClientSide
+                    ? Palette.TextMuted : Palette.Highlight;
+
+            var warnings = BrowseTab.WarningsFor(package);
+            if (warnings.Count > 0)
+            {
+                AddLabel("", 8f);
+                foreach (var requirement in warnings)
+                {
+                    var w = AddLabel("!  " + requirement.Text, 20f);
+                    if (w != null)
+                        w.color = requirement.IsBlocking ? Palette.Highlight : Palette.TextPrimary;
+                }
+            }
+
+            AddLabel("", 8f);
+            var files = AddLabel($"writes {version.Files.Count} file(s):", 18f);
+            if (files != null) files.color = Palette.TextMuted;
+            foreach (var file in version.Files)
+            {
+                var f = AddLabel("   " + file.TargetPath, 17f);
+                if (f != null) f.color = Palette.TextMuted;
+            }
+
+            AddLabel("", 12f);
+
+            var actions = new GameObject("ConfirmActions");
+            actions.transform.SetParent(_contentRoot, false);
+            var ale = actions.AddComponent<LayoutElement>();
+            ale.minHeight = 44f;
+            ale.preferredHeight = 44f;
+            var alayout = actions.AddComponent<HorizontalLayoutGroup>();
+            alayout.spacing = 12f;
+            alayout.childForceExpandWidth = false;
+            alayout.childAlignment = TextAnchor.MiddleLeft;
+
+            var install = MakeButton(actions.transform, "INSTALL", 190f, () => Browse.ConfirmInstall());
+            if (install != null && install.Item1 != null)
+            {
+                var ii = install.Item1.GetComponent<Image>();
+                if (ii != null) ii.color = Palette.Accent;
+            }
+
+            var cancel = MakeButton(actions.transform, "CANCEL", 150f, () => Browse.CancelConfirm());
+            if (cancel != null && cancel.Item1 != null)
+            {
+                var ci = cancel.Item1.GetComponent<Image>();
+                if (ci != null) ci.color = Palette.RowDisabled;
+            }
+        }
+
+        private void PopulateBusy()
+        {
+            var status = AddLabel(string.IsNullOrEmpty(Browse.Status) ? "Working..." : Browse.Status, 24f);
+            if (status != null) status.color = Palette.TextPrimary;
+
+            var hint = AddLabel("Downloads are verified before anything is written.", 18f);
+            if (hint != null) hint.color = Palette.TextMuted;
+        }
+
+        internal TextMeshProUGUI AddLabel(string text, float size)
         {
             var go = UnityEngine.Object.Instantiate(_textTemplate, _contentRoot, false);
             go.name = $"Label_{text}";
@@ -1138,7 +1410,7 @@ namespace BapbapMods.Manager
         public Action<ModEntry> OnConfigRequested;
 
         /// Small button; returns it with its label so callers can update the text later.
-        private Tuple<Button, TextMeshProUGUI> MakeButton(Transform parent, string text, float width, Action onClick)
+        internal Tuple<Button, TextMeshProUGUI> MakeButton(Transform parent, string text, float width, Action onClick)
         {
             var go = new GameObject($"Btn_{text}");
             go.transform.SetParent(parent, false);
@@ -1170,7 +1442,7 @@ namespace BapbapMods.Manager
             return new Tuple<Button, TextMeshProUGUI>(btn, label);
         }
 
-        private TextMeshProUGUI AddRowLabel(Transform parent, string text)
+        internal TextMeshProUGUI AddRowLabel(Transform parent, string text)
         {
             var go = UnityEngine.Object.Instantiate(_textTemplate, parent, false);
             go.name = "Label";

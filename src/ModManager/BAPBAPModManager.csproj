@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ModManagerMod.cs" /><Compile Include="ModCatalog.cs" /><Compile Include="FlagStore.cs" /><Compile Include="MatchState.cs" /><Compile Include="NativeTab.cs" /><Compile Include="NativePage.cs" /><Compile Include="ModSettings.cs" /><Compile Include="Palette.cs" /><Compile Include="IniStore.cs" /><Compile Include="SettingsTab.cs" /><Compile Include="Catalog.cs" /><Compile Include="CatalogFetcher.cs" /><Compile Include="ModInstaller.cs" />
+    <Compile Include="ModManagerMod.cs" /><Compile Include="ModCatalog.cs" /><Compile Include="FlagStore.cs" /><Compile Include="MatchState.cs" /><Compile Include="NativeTab.cs" /><Compile Include="NativePage.cs" /><Compile Include="ModSettings.cs" /><Compile Include="Palette.cs" /><Compile Include="IniStore.cs" /><Compile Include="SettingsTab.cs" /><Compile Include="Catalog.cs" /><Compile Include="CatalogFetcher.cs" /><Compile Include="ModInstaller.cs" /><Compile Include="BrowseTab.cs" />
   </ItemGroup>
 
   <!-- Game install. Override with -p:GameDir=... if the library moves. -->
