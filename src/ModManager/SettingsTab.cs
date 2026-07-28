@@ -116,6 +116,10 @@ namespace BapbapMods.Manager
         private readonly List<GameObject> _otherPanels = new List<GameObject>();
         private GameObject _panelOnOpen;
 
+        /// Panels we faded out while our tab is showing, and the alpha to give back.
+        private readonly List<KeyValuePair<CanvasGroup, float>> _fadedPanels =
+            new List<KeyValuePair<CanvasGroup, float>>();
+
         private bool _built;
         private ModEntry _detailMod;   // null = list view
 
@@ -269,6 +273,7 @@ namespace BapbapMods.Manager
 
             _panel.SetActive(true);
             _panel.transform.SetAsLastSibling();
+            HideGamePanels();
 
             // Take the highlight: clear every game tab, light ours up.
             for (int i = 0; i < _gameTabs.Count; i++) SetTabSelected(_gameTabs[i], false);
@@ -598,8 +603,44 @@ namespace BapbapMods.Manager
             return null;
         }
 
+        /// The game's tab controller has no idea our tab exists, so clicking it never runs the
+        /// controller's switch-panel logic and whatever was selected stays active at alpha 1,
+        /// sharing the content area with ours. Measured: 'Contents_Controls' active=True
+        /// alpha=1.00 at the same time as our own panel.
+        ///
+        /// Fade them the way the GAME does rather than deactivating them — deactivating is the
+        /// documented trap that leaves the settings window blank, because the controller still
+        /// believes its tab is selected. Alpha is reversible and is the game's own mechanism.
+        private void HideGamePanels()
+        {
+            RestoreGamePanels();
+
+            foreach (var panel in _otherPanels)
+            {
+                if (panel == null || !panel.activeInHierarchy) continue;
+
+                var cg = panel.GetComponent<CanvasGroup>();
+                if (cg == null || cg.alpha <= 0f) continue;
+
+                _fadedPanels.Add(new KeyValuePair<CanvasGroup, float>(cg, cg.alpha));
+                cg.alpha = 0f;
+            }
+        }
+
+        /// Always give back exactly what we took, so leaving our tab cannot strand one of the
+        /// game's panels invisible.
+        private void RestoreGamePanels()
+        {
+            foreach (var pair in _fadedPanels)
+            {
+                try { if (pair.Key != null) pair.Key.alpha = pair.Value; } catch { }
+            }
+            _fadedPanels.Clear();
+        }
+
         public void Close()
         {
+            RestoreGamePanels();
             if (_panel != null) _panel.SetActive(false);
             SetTabSelected(_tabButton, false);
 
