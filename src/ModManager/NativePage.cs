@@ -76,6 +76,9 @@ namespace BapbapMods.Manager
             {
                 if (Visible && _browseMode && _viewMod == null) Rebuild();
             };
+
+            // An install or removal changes what the INSTALLED tab should show.
+            Browse.OnInstalledChanged = () => OnInstalledChanged?.Invoke();
         }
 
         public void Reset()
@@ -1416,6 +1419,15 @@ namespace BapbapMods.Manager
 
         /// Raised when a Config button is pressed, so the host mod can route it.
         public Action<ModEntry> OnConfigRequested;
+
+        /// Raised when a mod was installed or removed, so the owner can re-scan the folder.
+        public Action OnInstalledChanged;
+
+        /// Replace the catalogued mods after a re-scan.
+        internal void SetEntries(List<ModEntry> entries)
+        {
+            if (entries != null) _entries = entries;
+        }
 
         /// Small button; returns it with its label so callers can update the text later.
         internal Tuple<Button, TextMeshProUGUI> MakeButton(Transform parent, string text, float width, Action onClick)

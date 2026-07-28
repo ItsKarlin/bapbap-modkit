@@ -55,6 +55,10 @@ namespace BapbapMods.Manager
         /// Raised whenever anything the UI draws has changed, so the page can rebuild.
         public Action OnChanged;
 
+        /// Re-scan installed mods. Set by the page so a finished install shows up in the
+        /// INSTALLED tab straight away instead of only after a reopen.
+        public Action OnInstalledChanged;
+
         public void Init(MelonLogger.Instance log, string userDataDir, string gameRoot,
                          Func<List<ModEntry>> installedMods = null)
         {
@@ -284,6 +288,7 @@ namespace BapbapMods.Manager
                     {
                         Status = report.Message;
                         Installed = ModInstaller.AllReceipts(_userDataDir);
+                        OnInstalledChanged?.Invoke();
                         _log?.Msg($"[browse] {report.Message}");
                     }
                     else
@@ -342,6 +347,7 @@ namespace BapbapMods.Manager
             else { Error = report.Message; Status = ""; }
 
             Installed = ModInstaller.AllReceipts(_userDataDir);
+            OnInstalledChanged?.Invoke();
             _log?.Msg($"[browse] {report.Message}");
             Changed();
         }

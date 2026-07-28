@@ -56,6 +56,10 @@ namespace BapbapMods.Manager
         /// True when this mod has settings the manager can edit.
         public bool HasOptions;
 
+        /// False for a DLL sitting in Mods/ that MelonLoader has not loaded — i.e. one just
+        /// downloaded. It is installed, it simply is not running yet.
+        public bool Loaded = true;
+
         public bool RequiresRestart => true; // MelonLoader cannot unload mods mid-session
 
         public string SourceLabel
@@ -184,6 +188,45 @@ namespace BapbapMods.Manager
                         ApplyMeta(entry);
                         entry.HasOptions = ModSettings.For(entry).Count > 0;
                         list.Add(entry);
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            // --- present but not loaded -----------------------------------------------
+            // A mod downloaded this session is in Mods/ but was not there at startup, so it is
+            // neither in RegisteredMelons nor in disabled/. Without this it vanishes from the
+            // list until the next launch, which reads as a failed install.
+            try
+            {
+                if (Directory.Exists(modsDir))
+                {
+                    foreach (string path in Directory.GetFiles(modsDir, "*.dll"))
+                    {
+                        string file = Path.GetFileName(path);
+                        if (seenFiles.Contains(file)) continue;
+
+                        string guess = Path.GetFileNameWithoutExtension(file);
+                        var entry = new ModEntry
+                        {
+                            Id = guess,
+                            DisplayName = guess,
+                            Version = "",
+                            Author = "",
+                            DllName = file,
+                            Enabled = true,
+                            Installed = true,
+                            Loaded = false
+                        };
+
+                        ApplyMeta(entry);
+                        entry.Description = "Installed, not running yet - restart to load it. " +
+                                            (entry.Description ?? "");
+                        entry.HasOptions = ModSettings.For(entry).Count > 0;
+                        list.Add(entry);
+                        seenFiles.Add(file);
                     }
                 }
             }

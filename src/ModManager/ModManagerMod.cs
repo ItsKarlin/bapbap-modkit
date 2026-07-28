@@ -72,6 +72,11 @@ namespace BapbapMods.Manager
             Refresh();
             NativeTab.Init(LoggerInstance);
             _nativePage.Init(LoggerInstance);
+            _nativePage.OnInstalledChanged = () =>
+            {
+                Refresh();
+                _nativePage.SetEntries(_entries);
+            };
             _nativePage.OnConfigRequested = m =>
                 _status = $"{m.DisplayName}: open Settings > Mods to edit its options.";
             _settingsTab.Init(LoggerInstance, () => _entries);
