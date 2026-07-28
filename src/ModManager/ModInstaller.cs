@@ -48,6 +48,11 @@ namespace BapbapMods.Manager
         public static string StagingDir(string userDataDir) =>
             Path.Combine(userDataDir, "bapbap-modkit", "staging");
 
+        /// Files that could not be deleted because the running process has them loaded. They
+        /// are moved here and swept on next startup.
+        public static string PendingDeleteDir(string userDataDir) =>
+            Path.Combine(userDataDir, "bapbap-modkit", "pending-delete");
+
         public static string ReceiptsDir(string userDataDir) =>
             Path.Combine(userDataDir, "bapbap-modkit", "installed");
 
@@ -190,6 +195,7 @@ namespace BapbapMods.Manager
 
             var report = new InstallReport { Ok = true, NeedsRestart = true };
             var failed = new List<string>();
+            bool deferred = false;
 
             foreach (string path in receipt.Files)
             {
@@ -201,14 +207,27 @@ namespace BapbapMods.Manager
                     continue;
                 }
 
+                if (!File.Exists(resolved)) { report.Files.Add(resolved); continue; }
+
                 try
                 {
-                    if (File.Exists(resolved)) File.Delete(resolved);
+                    File.Delete(resolved);
                     report.Files.Add(resolved);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    failed.Add($"{Path.GetFileName(path)} ({ex.Message})");
+                    // A loaded assembly is locked by the process and cannot be deleted, and
+                    // MelonLoader cannot unload it. Moving it out of Mods/ still works, so the
+                    // mod stops loading next launch; the file itself is swept then.
+                    if (MoveToPendingDelete(resolved, userDataDir))
+                    {
+                        report.Files.Add(resolved);
+                        deferred = true;
+                    }
+                    else
+                    {
+                        failed.Add(Path.GetFileName(path));
+                    }
                 }
             }
 
@@ -216,11 +235,58 @@ namespace BapbapMods.Manager
 
             TryDelete(ReceiptPath(userDataDir, packageId));
 
-            report.Message = failed.Count == 0
-                ? $"{receipt.Name} removed — restart to unload it."
-                : $"{receipt.Name} partly removed; could not delete: {string.Join(", ", failed)}";
-            report.Ok = failed.Count == 0;
+            if (failed.Count > 0)
+            {
+                report.Ok = false;
+                report.Message = $"{receipt.Name}: could not remove {string.Join(", ", failed)}";
+            }
+            else
+            {
+                report.Ok = true;
+                report.Message = deferred
+                    ? $"{receipt.Name} removed — it is still loaded, so restart to finish."
+                    : $"{receipt.Name} removed — restart to unload it.";
+            }
             return report;
+        }
+
+        /// Windows will not delete a DLL the process has loaded, but it will move it. Getting
+        /// it out of Mods/ is what actually matters: the mod stops loading next launch.
+        private static bool MoveToPendingDelete(string path, string userDataDir)
+        {
+            try
+            {
+                string dir = PendingDeleteDir(userDataDir);
+                Directory.CreateDirectory(dir);
+
+                string target = Path.Combine(dir,
+                    Path.GetFileName(path) + "." + Guid.NewGuid().ToString("N").Substring(0, 8) + ".pending");
+
+                File.Move(path, target);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// Called at startup, before anything has been loaded from these files.
+        public static int SweepPendingDeletes(string userDataDir)
+        {
+            int removed = 0;
+            try
+            {
+                string dir = PendingDeleteDir(userDataDir);
+                if (!Directory.Exists(dir)) return 0;
+
+                foreach (string path in Directory.GetFiles(dir, "*.pending"))
+                {
+                    try { File.Delete(path); removed++; } catch { }
+                }
+            }
+            catch { }
+            return removed;
         }
 
         /// Settings are named after the assembly, so derive the stem from the DLLs we installed.

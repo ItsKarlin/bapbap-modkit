@@ -62,6 +62,10 @@ namespace BapbapMods.Manager
             _modsDir = MelonEnvironment.ModsDirectory;
             _flags = new FlagStore(_userDataDir);
 
+            // Files a previous session could not delete because they were loaded.
+            int swept = ModInstaller.SweepPendingDeletes(_userDataDir);
+            if (swept > 0) LoggerInstance.Msg($"[{ExperimentId}] cleaned up {swept} removed mod file(s).");
+
             _enabled = _flags.Get(ExperimentId, true);
             if (!_enabled)
             {
