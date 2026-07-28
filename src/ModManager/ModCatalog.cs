@@ -110,13 +110,40 @@ namespace BapbapMods.Manager
             { "BAPBAP Third Person", new ModMeta {
                 Category = ModCategory.ClientSide, Source = ModSource.Local,
                 Description = "Third-person camera. F1 toggles. Pointer for cards and menus." } },
-            { "BAPBAP Round Mutators", new ModMeta {
-                Category = ModCategory.HostOnly, Source = ModSource.Local,
-                Description = "Turns on the game's built-in match modifiers. Changes the match for everyone when you host." } },
             { "BAPBAP Mods", new ModMeta {
                 Category = ModCategory.ClientSide, Source = ModSource.Local,
                 Description = "This mod manager." } }
         };
+
+        /// Scope declared by whatever catalog the mod was installed from, keyed by DLL name.
+        /// Consulted before the built-in overlay, so a mod states its own scope and the manager
+        /// needs no entry for it. This is what keeps "nothing hardcoded per-mod" true.
+        private static Dictionary<string, ModCategory> _declaredScopes =
+            new Dictionary<string, ModCategory>(StringComparer.OrdinalIgnoreCase);
+
+        public static void LoadDeclaredScopes(string userDataDir)
+        {
+            var map = new Dictionary<string, ModCategory>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                foreach (var pair in ModInstaller.AllReceipts(userDataDir))
+                {
+                    var receipt = pair.Value;
+                    if (receipt == null || string.IsNullOrEmpty(receipt.Scope)) continue;
+
+                    var scope = receipt.Scope.Equals("host", StringComparison.OrdinalIgnoreCase)
+                        ? ModCategory.HostOnly : ModCategory.ClientSide;
+
+                    foreach (string file in receipt.Files)
+                    {
+                        string name = Path.GetFileName(file);
+                        if (!string.IsNullOrEmpty(name)) map[name] = scope;
+                    }
+                }
+            }
+            catch { }
+            _declaredScopes = map;
+        }
 
         public static List<ModEntry> Build(string modsDir, FlagStore flags)
         {
@@ -243,6 +270,24 @@ namespace BapbapMods.Manager
 
         private static void ApplyMeta(ModEntry entry)
         {
+            // What the mod's own catalog entry said, if it was installed through the manager.
+            if (!string.IsNullOrEmpty(entry.DllName) &&
+                _declaredScopes.TryGetValue(entry.DllName, out var declared))
+            {
+                entry.Category = declared;
+                entry.Source = ModSource.Unknown;
+                entry.Description = declared == ModCategory.HostOnly
+                    ? "Affects everyone in your lobby when you host."
+                    : "Affects only your own screen.";
+
+                if (Known.TryGetValue(entry.Id, out var extra))
+                {
+                    entry.Source = extra.Source;
+                    entry.Description = extra.Description;
+                }
+                return;
+            }
+
             if (Known.TryGetValue(entry.Id, out var meta))
             {
                 entry.Category = meta.Category;

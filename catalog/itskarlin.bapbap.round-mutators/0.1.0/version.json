@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "itskarlin.bapbap.round-mutators",
+  "version": "0.1.0",
+  "files": [
+    {
+      "sourcePath": "dist/BAPBAPRoundMutators.dll",
+      "targetPath": "Mods/BAPBAPRoundMutators.dll",
+      "sha256": "0a9de75b325aa4e1d72df235a3be4721574587c63e26bf3ec6832027b0833db9",
+      "description": "Main mod dll"
+    }
+  ]
+}

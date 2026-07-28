@@ -319,6 +319,7 @@ namespace BapbapMods.Manager
         private void Refresh()
         {
             _flags.Load();
+            ModCatalog.LoadDeclaredScopes(_userDataDir);
             _entries = ModCatalog.Build(_modsDir, _flags);
             MatchState.Evaluate();
         }

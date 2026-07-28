@@ -11,8 +11,25 @@
       "author": "ItsKarlin",
       "scope": "client",
       "latestVersion": "1.0.1",
-      "tags": ["camera", "client"],
+      "tags": [
+        "camera",
+        "client"
+      ],
       "versionManifestPath": "catalog/itskarlin.bapbap.third-person/1.0.1/version.json"
+    },
+    {
+      "id": "itskarlin.bapbap.round-mutators",
+      "name": "BAPBAP Round Mutators",
+      "summary": "Turns on the game's built-in match modifiers - meteor showers, giants, night time, XCOM.",
+      "author": "ItsKarlin",
+      "scope": "host",
+      "latestVersion": "0.1.0",
+      "tags": [
+        "mutators",
+        "host",
+        "chaos"
+      ],
+      "versionManifestPath": "catalog/itskarlin.bapbap.round-mutators/0.1.0/version.json"
     }
   ]
 }

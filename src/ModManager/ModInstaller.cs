@@ -35,6 +35,11 @@ namespace BapbapMods.Manager
         public string Name;
         public string Version;
         public string SourceId;
+
+        /// The scope the catalog declared at install time. This is how a mod tells the manager
+        /// what it affects WITHOUT the manager holding a hardcoded list of mod names.
+        public string Scope = "";
+
         public List<string> Files = new List<string>();
     }
 
@@ -146,6 +151,9 @@ namespace BapbapMods.Manager
                     Name = package.Name,
                     Version = manifest.Version,
                     SourceId = package.SourceId,
+                    Scope = package.ScopeKnown
+                        ? (package.Scope == ModCategory.HostOnly ? "host" : "client")
+                        : "",
                     Files = report.Files
                 });
 
@@ -324,6 +332,7 @@ namespace BapbapMods.Manager
                     ["name"] = receipt.Name,
                     ["version"] = receipt.Version,
                     ["sourceId"] = receipt.SourceId,
+                    ["scope"] = receipt.Scope ?? "",
                     ["files"] = files
                 };
 
@@ -345,7 +354,8 @@ namespace BapbapMods.Manager
                     PackageId = (string)obj["packageId"],
                     Name = (string)obj["name"] ?? packageId,
                     Version = (string)obj["version"] ?? "",
-                    SourceId = (string)obj["sourceId"] ?? ""
+                    SourceId = (string)obj["sourceId"] ?? "",
+                    Scope = (string)obj["scope"] ?? ""
                 };
 
                 if (obj["files"] is JArray files)

@@ -302,7 +302,12 @@ namespace BapbapMods.Manager
 
             _panel.SetActive(true);
             _panel.transform.SetAsLastSibling();
-            HideGamePanels();
+
+            // Deliberately does NOT touch the game's panels. Fading them caused three separate
+            // breakages: a panel the game re-activated came back at alpha 0 and rendered as an
+            // empty settings window. Our panel is full-size, opaque and drawn last, so it
+            // covers whatever is behind it without needing anything hidden.
+            RestoreGamePanels();
 
             // Take the highlight: clear every game tab, light ours up.
             for (int i = 0; i < _gameTabs.Count; i++) SetTabSelected(_gameTabs[i], false);
@@ -385,7 +390,8 @@ namespace BapbapMods.Manager
             // The game re-activated one of its own panels while we still hold a fade on it.
             // Give the alpha back immediately: a panel that is active at alpha 0 renders as an
             // empty settings window, which is exactly what our own fade caused.
-            if (AnyFadedPanelWentActive()) { Close(); return; }
+            // Undo any damage an earlier build's fading left behind.
+            RepairStrandedPanels();
 
             if (CurrentGamePanel() != _panelOnOpen) Close();
         }
@@ -683,40 +689,25 @@ namespace BapbapMods.Manager
         /// Fade them the way the GAME does rather than deactivating them — deactivating is the
         /// documented trap that leaves the settings window blank, because the controller still
         /// believes its tab is selected. Alpha is reversible and is the game's own mechanism.
-        private void HideGamePanels()
+        /// An earlier build faded the game's panels and could leave one stranded invisible.
+        /// If a panel is active but fully transparent, nothing else is going to fix it, so put
+        /// it back. Runs only while the settings window is open.
+        private void RepairStrandedPanels()
         {
-            RestoreGamePanels();
-
             foreach (var panel in _otherPanels)
             {
                 if (panel == null || !panel.activeInHierarchy) continue;
 
                 var cg = panel.GetComponent<CanvasGroup>();
-                if (cg == null || cg.alpha <= 0f) continue;
+                if (cg == null || cg.alpha > 0.01f) continue;
 
-                _fadedPanels.Add(new KeyValuePair<CanvasGroup, float>(cg, cg.alpha));
-                cg.alpha = 0f;
+                cg.alpha = 1f;
+                _log?.Msg($"[settings] restored '{panel.name}' - it was active but invisible.");
             }
         }
 
         /// True when the game has faded one of our hidden panels back in. Checked every frame
         /// the settings window is open; a couple of float reads when nothing is faded.
-        private bool AnyFadedPanelWentActive()
-        {
-            for (int i = 0; i < _fadedPanels.Count; i++)
-            {
-                var cg = _fadedPanels[i].Key;
-                if (cg == null) continue;
-
-                // We set this to 0 and left the object ACTIVE, because deactivating the game's
-                // panels blanks the window. So "still active" means nothing - the signal that
-                // the game switched back is it writing a non-zero alpha over ours.
-                try { if (cg.alpha > 0.01f) return true; }
-                catch { }
-            }
-            return false;
-        }
-
         /// Always give back exactly what we took, so leaving our tab cannot strand one of the
         /// game's panels invisible.
         private void RestoreGamePanels()
