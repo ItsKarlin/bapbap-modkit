@@ -1,145 +1,87 @@
 # BAPBAP Modkit
 
-An in-game mod manager for [BAPBAP](https://store.steampowered.com/app/2226280/). A third-person
-camera mod lives here too, but it's a separate download rather than part of the manager.
-
-The point of the manager is that it doesn't know about your mods in advance. It reads whatever
-MelonLoader actually loaded, so any mod shows up in the list, can be turned on and off, and — if
-it writes a normal config file — has its settings editable from inside the game. That includes
-mods written after this one.
+An in-game mod manager for [BAPBAP](https://store.steampowered.com/app/2226280/). It lists
+whatever MelonLoader loaded, toggles mods on and off, and edits their settings — including mods
+it's never heard of.
 
 ## Install
 
-Windows, in PowerShell:
+**Windows** — in PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.ps1 | iex
 ```
 
-Linux or Steam Deck:
+**Linux / Steam Deck**:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.sh | bash
 ```
 
-That installs the manager and nothing else. It finds your BAPBAP folder, checks the DLL against
-the sha256 in [`dist/manifest.json`](dist/manifest.json), and won't install anything that doesn't
-match. If you'd rather do it by hand, it's [`dist/BAPBAPModManager.dll`](dist/) and it goes in
-`BAPBAP/Mods/`.
+It needs MelonLoader and will offer to install it if you don't have it. Everything it downloads
+is sha256-checked against [`dist/manifest.json`](dist/manifest.json). By hand: drop
+[`dist/BAPBAPModManager.dll`](dist/) into `BAPBAP/Mods/`.
 
-Actual mods are meant to be browsed and installed from inside the manager rather than bundled
-into it. That downloader isn't built yet — until it is, drop mod DLLs into `BAPBAP/Mods/`
-yourself and the manager will pick them up.
-
-If you don't have MelonLoader, the installer offers to fetch it — `0.7.2-ci.2388`, verified by
-sha256 like everything else. That's deliberately not the public 0.7.3 release: it's the CI build
-the BAPHub launcher pins, and BAPHub's mods are built against it. If you already have a different
-version the installer leaves it alone and just says so.
-
-On Linux you also need this launch option in Steam, or Proton ignores the loader without telling
-you anything:
+On Linux, set this Steam launch option or Proton ignores MelonLoader with no error:
 
 ```
 WINEDLLOVERRIDES="version=n,b" %command%
 ```
 
-MelonLoader only loads mods at startup, so restart the game after installing or toggling
-anything.
+## Using it
 
-## The manager
+`F5`, or the MODS button in the nav bar. Also under Settings → Mods.
 
-Press `F5` in the menus or click MODS in the top nav bar. There's also a Mods tab in the settings
-menu if you prefer it there. It's client-side and changes nothing for anyone else in your lobby.
+Mods are grouped by who they affect:
+
+| | |
+|---|---|
+| **Host** | Changes the match for everyone when you host. Locked mid-match. |
+| **Client** | Your screen only. Always safe. |
+| **Unrecognised** | No scope info — assume host until you know better. |
+
+**Config** opens a mod's settings. Toggling a mod takes effect on the next launch, since
+MelonLoader can't unload an assembly mid-session.
+
+Host mods change the game for everyone in the lobby, and guests need nothing installed to be
+affected — so keep them to private lobbies with people who agreed to it.
 
 ## Third Person
 
-A third-person camera on `F1`, kept in this repo but **not installed by the one-liner**. It hides
-the crosshair while active and gives you a mouse pointer for card picks and menus, since the game
-normally hides the cursor during a match. FOV, sensitivity, camera height and pitch are
-configurable and reload live. Client-side.
+A third-person camera on `F1` — no crosshair, mouse pointer for card picks, configurable FOV,
+sensitivity, height and pitch. Not installed by the one-liner: grab
+[`dist/BAPBAPThirdPerson.dll`](dist/) and drop it in `BAPBAP/Mods/`.
 
-Grab [`dist/BAPBAPThirdPerson.dll`](dist/) and drop it in `BAPBAP/Mods/` if you want it now. Once
-the in-game downloader exists it'll be one of the things you can install from there — it's
-deliberately treated as a mod the manager fetches, not part of the manager.
+## Writing mods
 
-## Using it
-
-The mod list is grouped by how far a mod's effect reaches:
-
-- **Host** mods change the match for everyone when you're hosting. They're locked while a match
-  is running.
-- **Client** mods only affect your screen, so they're always safe to toggle.
-- **Unrecognised** means there's no scope metadata for it. It's still listed and still
-  toggleable, but assume it's host-side until you know better.
-
-Config on any mod opens its settings. Disabling one moves its DLL to `Mods/disabled/`, which
-takes effect next launch — MelonLoader can't unload an assembly mid-session.
-
-### About hosting
-
-BAPBAP is host-authoritative (Mirror over FizzySteamworks), so host-side mods change the match for
-everyone in the lobby and guests don't need to install anything. They can join from a stock Steam
-copy. That's genuinely useful, and it's also the reason to keep this to private lobbies with
-people who know what they're getting into. Don't take host-side mods into public matchmaking.
-
-There's no anti-cheat binary, but Unity Analytics and GameAnalytics are both live, so modded
-sessions are visible server-side. Nothing here tries to hide that.
-
-## If you write mods
-
-Your mod shows up in the manager on its own; there's nothing to register. If it writes
-`UserData/<YourAssembly>.ini` as plain `key=value` lines, the manager infers types and makes those
-settings editable in-game without you doing anything.
-
-If you want real labels, slider ranges, descriptions and host/client scope, ship a
-`UserData/<YourAssembly>.settings.json` next to it. The format is in
-[docs/settings-schema.md](docs/settings-schema.md).
+Your mod appears in the manager with no work from you. If it writes
+`UserData/<YourAssembly>.ini` as `key=value` lines, those settings become editable in-game
+automatically. For proper labels, ranges and scope, add a `<YourAssembly>.settings.json` —
+see [docs/settings-schema.md](docs/settings-schema.md).
 
 ## Building
 
-You need the .NET SDK and a BAPBAP install that's been launched at least once with MelonLoader —
-the projects reference `MelonLoader/net6/` and the `Il2CppAssemblies/` folder MelonLoader
-generates on first run.
+Needs the .NET SDK and a BAPBAP install that's been launched once with MelonLoader.
 
 ```bash
-cd src/ModManager          # or src/ThirdPerson
+cd src/ModManager                 # or src/ThirdPerson
 dotnet build -c Release -o out
 cp out/*.dll "<BAPBAP>/Mods/"
 ```
 
-`GameDir` defaults to the usual Linux Steam path. Anywhere else, override it:
+Outside the default Linux Steam path, pass `-p:GameDir="C:\...\common\BAPBAP"`.
 
-```bash
-dotnet build -c Release -o out -p:GameDir="C:\Program Files (x86)\Steam\steamapps\common\BAPBAP"
-```
+## Notes
 
-`src/ModManager` and `src/ThirdPerson` are the sources, `dist/` holds the prebuilt DLLs and the
-manifest the installer reads, `docs/` has the settings schema.
-
-## Known issues
-
-Windows hasn't been verified. All of this was built and tested on Linux under Proton
-Experimental. The code doesn't do anything platform-specific and the installer handles Windows
-paths, but nobody has actually run it on Windows yet.
-
-The MODS button is dimmer than the game's own nav tabs. The game's tab highlight lives in
-internal SDF shader state with no handle to reach it — dumping two lit tabs side by side showed
-every readable property identical. It's cosmetic and it's staying that way.
-
-Whichever tab you had selected keeps its blue marker while the MODS page is open. Closing the
-game's own page to clear it turns the lobby black, so the page just covers it instead.
-
-There's an occasional frame spike, roughly one every couple of minutes, with the full BAPHub set
-installed. It hasn't been pinned to a specific mod.
+- **Untested on Windows.** Built and run on Linux under Proton only.
+- The MODS button is dimmer than the game's own tabs, and the previously selected tab keeps its
+  marker while the page is open. Both cosmetic.
+- Occasional frame spike with the full BAPHub mod set installed.
 
 ## Credits
 
-The other BAPBAP mods — Hidden Dev Arguments, Pool Randomizer, HP Numbers, Arena Random Chars,
-Asset Dumper, More Custom Settings — are BAPHub's work. This repo doesn't redistribute any of
-them; the manager just discovers and configures whatever you installed yourself.
+Hidden Dev Arguments, Pool Randomizer, HP Numbers, Arena Random Chars, Asset Dumper and More
+Custom Settings are [BAPHub's](https://github.com/Sonic0810/BAPBAPLauncher) work — this repo
+doesn't redistribute them, it just detects and configures what you install yourself.
 
-Third Person is a clean-room implementation written against the game's own API.
-
-Not affiliated with or endorsed by the developers of BAPBAP.
-
-MIT licensed, see [LICENSE](LICENSE).
+Not affiliated with the developers of BAPBAP. MIT, see [LICENSE](LICENSE).
