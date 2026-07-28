@@ -13,7 +13,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ModManagerMod.cs" /><Compile Include="ModCatalog.cs" /><Compile Include="FlagStore.cs" /><Compile Include="MatchState.cs" /><Compile Include="NativeTab.cs" /><Compile Include="NativePage.cs" /><Compile Include="ModSettings.cs" /><Compile Include="Palette.cs" /><Compile Include="IniStore.cs" /><Compile Include="SettingsTab.cs" />
+    <Compile Include="ModManagerMod.cs" /><Compile Include="ModCatalog.cs" /><Compile Include="FlagStore.cs" /><Compile Include="MatchState.cs" /><Compile Include="NativeTab.cs" /><Compile Include="NativePage.cs" /><Compile Include="ModSettings.cs" /><Compile Include="Palette.cs" /><Compile Include="IniStore.cs" /><Compile Include="SettingsTab.cs" /><Compile Include="Catalog.cs" />
   </ItemGroup>
 
   <!-- Game install. Override with -p:GameDir=... if the library moves. -->
@@ -24,6 +24,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(MLDir)/Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="MelonLoader">
       <HintPath>$(MLDir)/MelonLoader.dll</HintPath>
       <Private>false</Private>

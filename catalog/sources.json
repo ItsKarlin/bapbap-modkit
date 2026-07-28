@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "_comment": "Catalog sources, in trust order — on a package-id collision the first source listed wins. Copy this to UserData/bapbap-catalog-sources.json to override it locally.",
+  "sources": [
+    {
+      "sourceId": "modkit",
+      "displayName": "Modkit",
+      "baseUrl": "https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/",
+      "packagesPath": "catalog/catalog.json",
+      "enabled": true
+    },
+    {
+      "sourceId": "baphub",
+      "displayName": "BAPHub",
+      "baseUrl": "https://raw.githubusercontent.com/Sonic0810/BAPBAPLauncher/main/manifest/channels/release/",
+      "packagesPath": "packages.json",
+      "versionManifestTemplate": "{id}/versions/{version}/version.json",
+      "enabled": true
+    }
+  ]
+}
