@@ -5,12 +5,12 @@
     {
       "id": "BAPBAP Mods",
       "file": "BAPBAPModManager.dll",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": "ItsKarlin",
       "scope": "client",
-      "description": "In-game mod manager: discovers installed mods, toggles them, edits their settings.",
-      "size": 61952,
-      "sha256": "588c20f5681a285587610ae78c985ca886693043149d751b7a828d7ea7268157"
+      "description": "In-game mod manager: discovers installed mods, toggles them, edits their settings, and installs new ones from the built-in catalog.",
+      "size": 110592,
+      "sha256": "7991094e4bb6df216790e5004a2829ba2210e07322c3d4b617f9977a7f63c8bf"
     }
   ]
 }

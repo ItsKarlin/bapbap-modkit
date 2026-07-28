@@ -21,7 +21,7 @@ using MelonLoader;
 using MelonLoader.Utils;
 using UnityEngine;
 
-[assembly: MelonInfo(typeof(BapbapMods.Manager.ModManagerMod), "BAPBAP Mods", "0.1.0", "ItsKarlin")]
+[assembly: MelonInfo(typeof(BapbapMods.Manager.ModManagerMod), "BAPBAP Mods", "0.2.0", "ItsKarlin")]
 [assembly: MelonGame(null, "BAPBAP")]
 
 namespace BapbapMods.Manager
