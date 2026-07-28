@@ -353,6 +353,11 @@ namespace BapbapMods.Manager
             SetTabSelected(_tabButton, true);
 
             // Also step aside if the game swapped panels by any other route.
+            // The game re-activated one of its own panels while we still hold a fade on it.
+            // Give the alpha back immediately: a panel that is active at alpha 0 renders as an
+            // empty settings window, which is exactly what our own fade caused.
+            if (AnyFadedPanelWentActive()) { Close(); return; }
+
             if (CurrentGamePanel() != _panelOnOpen) Close();
         }
 
@@ -625,6 +630,21 @@ namespace BapbapMods.Manager
                 _fadedPanels.Add(new KeyValuePair<CanvasGroup, float>(cg, cg.alpha));
                 cg.alpha = 0f;
             }
+        }
+
+        /// True when something we faded has been switched back on by the game. Checked every
+        /// frame the settings window is open; it is a handful of null tests when nothing is
+        /// faded, which is the normal case.
+        private bool AnyFadedPanelWentActive()
+        {
+            for (int i = 0; i < _fadedPanels.Count; i++)
+            {
+                var cg = _fadedPanels[i].Key;
+                if (cg == null) continue;
+                try { if (cg.gameObject.activeInHierarchy) return true; }
+                catch { }
+            }
+            return false;
         }
 
         /// Always give back exactly what we took, so leaving our tab cannot strand one of the
