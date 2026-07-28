@@ -9,8 +9,8 @@
       "author": "ItsKarlin",
       "scope": "client",
       "description": "In-game mod manager: discovers installed mods, toggles them, edits their settings, and installs new ones from the built-in catalog.",
-      "size": 110592,
-      "sha256": "7991094e4bb6df216790e5004a2829ba2210e07322c3d4b617f9977a7f63c8bf"
+      "size": 111104,
+      "sha256": "3000a53a3ac037abcaa33b44e91a6493af6ed591b6ed069e22e169fbef463cdc"
     }
   ]
 }

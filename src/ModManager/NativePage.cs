@@ -1093,11 +1093,37 @@ namespace BapbapMods.Manager
                 return;
             }
 
-            if (!string.IsNullOrEmpty(Browse.Status))
+            // Status line and a refresh, side by side. The catalog is fetched once per session,
+            // so without this a mod published while the game is running stays invisible until
+            // the next launch.
+            var bar = new GameObject("BrowseBar");
+            bar.transform.SetParent(_contentRoot, false);
+            var barLe = bar.AddComponent<LayoutElement>();
+            barLe.minHeight = 38f;
+            barLe.preferredHeight = 38f;
+            var barLayout = bar.AddComponent<HorizontalLayoutGroup>();
+            barLayout.spacing = 12f;
+            barLayout.childForceExpandWidth = false;
+            barLayout.childAlignment = TextAnchor.MiddleLeft;
+
+            var status = AddRowLabel(bar.transform, Browse.Status ?? "");
+            if (status != null)
             {
-                var status = AddLabel(Browse.Status, 20f);
-                if (status != null) status.color = Palette.TextMuted;
+                status.fontSize = 18f;
+                status.color = Palette.TextMuted;
+                var sl = status.gameObject.GetComponent<LayoutElement>();
+                if (sl == null) sl = status.gameObject.AddComponent<LayoutElement>();
+                sl.flexibleWidth = 1f;
             }
+
+            var refresh = MakeButton(bar.transform, "REFRESH", 150f, () => Browse.Load(true));
+            if (refresh != null && refresh.Item1 != null)
+            {
+                var img2 = refresh.Item1.GetComponent<Image>();
+                if (img2 != null) img2.color = Palette.Row;
+                if (refresh.Item2 != null) refresh.Item2.color = Palette.TextMuted;
+            }
+
             AddLabel("", 6f);
 
             foreach (var package in Browse.Packages) AddBrowseRow(package);
