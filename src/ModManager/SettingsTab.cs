@@ -632,16 +632,19 @@ namespace BapbapMods.Manager
             }
         }
 
-        /// True when something we faded has been switched back on by the game. Checked every
-        /// frame the settings window is open; it is a handful of null tests when nothing is
-        /// faded, which is the normal case.
+        /// True when the game has faded one of our hidden panels back in. Checked every frame
+        /// the settings window is open; a couple of float reads when nothing is faded.
         private bool AnyFadedPanelWentActive()
         {
             for (int i = 0; i < _fadedPanels.Count; i++)
             {
                 var cg = _fadedPanels[i].Key;
                 if (cg == null) continue;
-                try { if (cg.gameObject.activeInHierarchy) return true; }
+
+                // We set this to 0 and left the object ACTIVE, because deactivating the game's
+                // panels blanks the window. So "still active" means nothing - the signal that
+                // the game switched back is it writing a non-zero alpha over ours.
+                try { if (cg.alpha > 0.01f) return true; }
                 catch { }
             }
             return false;
