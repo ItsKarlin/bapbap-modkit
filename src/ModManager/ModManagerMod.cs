@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using MelonLoader;
 using MelonLoader.Utils;
 using UnityEngine;
@@ -29,6 +30,15 @@ namespace BapbapMods.Manager
     {
         private const string ExperimentId = "mod-manager";
         private const KeyCode ToggleKey = KeyCode.F5;
+
+        /// Key-triggered network probe. Nothing runs unless it is pressed, so this costs
+        /// nothing at idle. Exists to answer one question that cannot be tested offline:
+        /// whether HttpClient works under Proton in this runtime.
+        private const KeyCode CatalogProbeKey = KeyCode.F6;
+        private bool _probeRunning;
+
+        /// The Mods folder's parent. Every catalog write is confined below this.
+        private static string GameRoot => Path.GetDirectoryName(MelonEnvironment.ModsDirectory);
 
         private bool _enabled;
         private bool _panelOpen;
@@ -68,6 +78,79 @@ namespace BapbapMods.Manager
             LoggerInstance.Msg($"[{ExperimentId}] {_entries.Count} mod(s) catalogued.");
         }
 
+        /// Fetches the real catalog from every configured source and reports what came back.
+        /// Answers, in one keypress: does HttpClient work here, does TLS work under Proton,
+        /// does the merge produce sane data, and does a callback land on the main thread.
+        private void RunCatalogProbe()
+        {
+            if (_probeRunning) { LoggerInstance.Msg($"[{ExperimentId}] probe already running."); return; }
+            _probeRunning = true;
+
+            LoggerInstance.Msg($"[{ExperimentId}] catalog probe: starting.");
+            var started = DateTime.UtcNow;
+
+            Task.Run(async () =>
+            {
+                var problems = new List<string>();
+                try
+                {
+                    string sourcesUrl =
+                        "https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/catalog/sources.json";
+
+                    var sourcesText = await CatalogFetcher.GetTextAsync(sourcesUrl).ConfigureAwait(false);
+                    if (!sourcesText.Ok)
+                    {
+                        Report($"sources fetch FAILED: {sourcesText.Error}", started);
+                        return;
+                    }
+
+                    var sources = Catalog.ParseSources(sourcesText.Value);
+                    Report($"sources ok: {sources.Count} configured", started);
+
+                    var catalog = await CatalogFetcher.FetchCatalogAsync(sources, problems).ConfigureAwait(false);
+                    if (!catalog.Ok)
+                    {
+                        Report($"catalog fetch FAILED: {catalog.Error}", started);
+                        return;
+                    }
+
+                    Report($"catalog ok: {catalog.Value.Count} package(s) merged", started);
+                    foreach (string problem in problems) Report($"  note: {problem}", started);
+
+                    // Then one version manifest, which is what an Install would need next.
+                    if (catalog.Value.Count > 0)
+                    {
+                        var first = catalog.Value[0];
+                        var version = await CatalogFetcher.FetchVersionAsync(first).ConfigureAwait(false);
+                        if (!version.Ok)
+                            Report($"version fetch FAILED for {first.Id}: {version.Error}", started);
+                        else
+                        {
+                            string safe = Catalog.IsInstallable(GameRoot, version.Value, out var why)
+                                ? "installable" : $"NOT installable ({why})";
+                            Report($"version ok: {first.Id} {version.Value.Version}, " +
+                                   $"{version.Value.Files.Count} file(s), {safe}", started);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Report($"probe THREW: {ex.GetType().Name}: {ex.Message}", started);
+                }
+                finally
+                {
+                    MainThread.Post(() => _probeRunning = false);
+                }
+            });
+        }
+
+        /// Log from the main thread, so this also proves the dispatcher works.
+        private void Report(string message, DateTime started)
+        {
+            double ms = (DateTime.UtcNow - started).TotalMilliseconds;
+            MainThread.Post(() => LoggerInstance.Msg($"[{ExperimentId}] probe (+{ms:F0}ms) {message}"));
+        }
+
         public override void OnUpdate()
         {
             if (!_enabled) return;
@@ -77,6 +160,11 @@ namespace BapbapMods.Manager
                 _panelOpen = !_panelOpen;
                 if (_panelOpen) Refresh();
             }
+
+            // Returns on a single volatile read when no network callback is waiting.
+            MainThread.Drain(ex => LoggerInstance.Error($"[{ExperimentId}] main-thread callback failed: {ex}"));
+
+            if (Input.GetKeyDown(CatalogProbeKey)) RunCatalogProbe();
 
             // Re-evaluate match state on a timer rather than every frame — the check walks
             // object lists and does not need 60Hz resolution.

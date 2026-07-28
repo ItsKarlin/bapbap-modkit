@@ -185,6 +185,46 @@ namespace BapbapMods.Manager
             return result;
         }
 
+        /// Reads sources.json. Order is trust order — see Merge.
+        public static List<SourceDescriptor> ParseSources(string json)
+        {
+            var list = new List<SourceDescriptor>();
+            if (string.IsNullOrEmpty(json)) return list;
+
+            JObject root;
+            try { root = JObject.Parse(json); }
+            catch { return list; }
+
+            var sources = root["sources"] as JArray;
+            if (sources == null) return list;
+
+            foreach (var node in sources)
+            {
+                var obj = node as JObject;
+                if (obj == null) continue;
+
+                string id = Str(obj["sourceId"]);
+                string baseUrl = Str(obj["baseUrl"]);
+                if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(baseUrl)) continue;
+
+                if (!baseUrl.EndsWith("/")) baseUrl += "/";
+
+                var enabled = obj["enabled"];
+
+                list.Add(new SourceDescriptor
+                {
+                    SourceId = id,
+                    DisplayName = Str(obj["displayName"]) ?? id,
+                    BaseUrl = baseUrl,
+                    PackagesPath = Str(obj["packagesPath"]) ?? "packages.json",
+                    VersionManifestTemplate = Str(obj["versionManifestTemplate"]),
+                    Enabled = enabled == null || enabled.Type != JTokenType.Boolean || (bool)enabled
+                });
+            }
+
+            return list;
+        }
+
         /// Requirements can also live in a package's own package.json, so this is public.
         public static List<CatalogRequirement> ParseRequirements(JArray array)
         {
