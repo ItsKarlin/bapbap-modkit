@@ -6,6 +6,7 @@
 In-game mod manager and mods for BAPBAP (Steam appid 2226280).
 
 **Read `HANDOFF.md` first** — it has the current state, the traps, and what to do next.
+(It's a local working file and is deliberately gitignored, so it won't be in a fresh clone.)
 
 ## Layout
 
