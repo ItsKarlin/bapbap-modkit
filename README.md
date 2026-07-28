@@ -1,4 +1,4 @@
-# BAPBAP Mods
+# BAPBAP Modkit
 
 An in-game mod manager for [BAPBAP](https://store.steampowered.com/app/2226280/), plus a
 third-person camera mod.
@@ -13,13 +13,13 @@ mods written after this one.
 Windows, in PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/ItsKarlin/bapbap-mods/main/install/install.ps1 | iex
+irm https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.ps1 | iex
 ```
 
 Linux or Steam Deck:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ItsKarlin/bapbap-mods/main/install/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.sh | bash
 ```
 
 It finds your BAPBAP folder, checks each DLL against the sha256 in

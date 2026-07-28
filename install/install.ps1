@@ -9,7 +9,7 @@
     Nothing is installed unless the hash matches.
 
 .EXAMPLE
-    irm https://raw.githubusercontent.com/ItsKarlin/bapbap-mods/main/install/install.ps1 | iex
+    irm https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.ps1 | iex
 
 .EXAMPLE
     .\install.ps1 -GameDir "D:\Games\SteamLibrary\steamapps\common\BAPBAP"
@@ -32,7 +32,7 @@ param(
 $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$Repo    = "ItsKarlin/bapbap-mods"
+$Repo    = "ItsKarlin/bapbap-modkit"
 $BaseUrl = "https://raw.githubusercontent.com/$Repo/$Ref"
 
 # MelonLoader is pinned to the CI build the BAPHub launcher uses. The public 0.7.3 release is
@@ -177,7 +177,7 @@ try {
 }
 Write-Ok "$($manifest.mods.Count) mods listed"
 
-$staging = Join-Path ([IO.Path]::GetTempPath()) ("bapbap-mods-" + [Guid]::NewGuid().ToString("N"))
+$staging = Join-Path ([IO.Path]::GetTempPath()) ("bapbap-modkit-" + [Guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path $staging | Out-Null
 
 $verified = @()

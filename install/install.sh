@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Installs the BAPBAP mod manager and Third Person mod (Linux / Proton).
 #
-#   curl -fsSL https://raw.githubusercontent.com/ItsKarlin/bapbap-mods/main/install/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.sh | bash
 #
 # Options (as env vars):
 #   GAME_DIR=/path/to/BAPBAP    skip auto-detection
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-REPO="ItsKarlin/bapbap-mods"
+REPO="ItsKarlin/bapbap-modkit"
 REF="${REF:-main}"
 BASE_URL="https://raw.githubusercontent.com/${REPO}/${REF}"
 APPID=2226280
