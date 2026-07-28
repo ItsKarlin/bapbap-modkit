@@ -79,7 +79,6 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 ## Claude's Roadmap (my ideas for the future)
 - ⬜ **Mod profiles** — save/load whole sets of enabled mods and settings, e.g. "chaos night" vs "vanilla-ish".
 - ⬜ **Publish the manager to BAPHub** — the author documents a package format; it would handle distribution and updates.
-- ⬜ **Report the two BAPFPS bugs upstream** to Sonic0810 — both precisely diagnosed, easy write-up, fixes everyone.
 - ⬜ **Settings search** — Hidden Dev Arguments alone exposes 60 keys; a filter box would help.
 
 ## Changelog

@@ -118,8 +118,8 @@ namespace BapbapMods.Manager
 
                 if (_gameManager == null) return false;
 
-                // A live gamemode on the manager means a match is actually running. This is
-                // the same signal BAPFPS uses, and it costs one field read.
+                // A live gamemode on the manager means a match is actually running, and reading
+                // it costs one field access.
                 return _gameManager.currentGameMode != null;
             }
             catch
