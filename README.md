@@ -1,7 +1,7 @@
 # BAPBAP Modkit
 
-An in-game mod manager for [BAPBAP](https://store.steampowered.com/app/2226280/), plus a
-third-person camera mod.
+An in-game mod manager for [BAPBAP](https://store.steampowered.com/app/2226280/). A third-person
+camera mod lives here too, but it's a separate download rather than part of the manager.
 
 The point of the manager is that it doesn't know about your mods in advance. It reads whatever
 MelonLoader actually loaded, so any mod shows up in the list, can be turned on and off, and — if
@@ -22,9 +22,14 @@ Linux or Steam Deck:
 curl -fsSL https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.sh | bash
 ```
 
-It finds your BAPBAP folder, checks each DLL against the sha256 in
-[`dist/manifest.json`](dist/manifest.json), and won't install anything that doesn't match. If
-you'd rather do it by hand, the DLLs are in [`dist/`](dist/) and they go in `BAPBAP/Mods/`.
+That installs the manager and nothing else. It finds your BAPBAP folder, checks the DLL against
+the sha256 in [`dist/manifest.json`](dist/manifest.json), and won't install anything that doesn't
+match. If you'd rather do it by hand, it's [`dist/BAPBAPModManager.dll`](dist/) and it goes in
+`BAPBAP/Mods/`.
+
+Actual mods are meant to be browsed and installed from inside the manager rather than bundled
+into it. That downloader isn't built yet — until it is, drop mod DLLs into `BAPBAP/Mods/`
+yourself and the manager will pick them up.
 
 If you don't have MelonLoader, the installer offers to fetch it — `0.7.2-ci.2388`, verified by
 sha256 like everything else. That's deliberately not the public 0.7.3 release: it's the CI build
@@ -41,16 +46,21 @@ WINEDLLOVERRIDES="version=n,b" %command%
 MelonLoader only loads mods at startup, so restart the game after installing or toggling
 anything.
 
-## What you get
+## The manager
 
-**BAPBAP Mods** is the manager. Press `F5` in the menus or click MODS in the top nav bar. There's
-also a Mods tab in the settings menu if you prefer it there.
+Press `F5` in the menus or click MODS in the top nav bar. There's also a Mods tab in the settings
+menu if you prefer it there. It's client-side and changes nothing for anyone else in your lobby.
 
-**BAPBAP Third Person** is a third-person camera on `F1`. It hides the crosshair while active and
-gives you a mouse pointer for card picks and menus, since the game normally hides the cursor
-during a match. FOV, sensitivity, camera height and pitch are configurable and reload live.
+## Third Person
 
-Both are client-side. Neither changes anything for other people in your lobby.
+A third-person camera on `F1`, kept in this repo but **not installed by the one-liner**. It hides
+the crosshair while active and gives you a mouse pointer for card picks and menus, since the game
+normally hides the cursor during a match. FOV, sensitivity, camera height and pitch are
+configurable and reload live. Client-side.
+
+Grab [`dist/BAPBAPThirdPerson.dll`](dist/) and drop it in `BAPBAP/Mods/` if you want it now. Once
+the in-game downloader exists it'll be one of the things you can install from there — it's
+deliberately treated as a mod the manager fetches, not part of the manager.
 
 ## Using it
 

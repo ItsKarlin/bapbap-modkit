@@ -14,6 +14,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - **Diagnostics must be idle-cost-zero** — the first probe scanned every second and became a stutter source itself.
 - **Measure before fixing** — the cursor bug took 4 failed guesses, the tab highlight 10+; both fell in one launch once instrumented.
 - **No redistribution of others' unlicensed work** — our Third Person mod is a clean-room build against the game's API.
+- **The modkit ships the manager, not a mod bundle** — the one-line installer installs the manager and nothing else. Mods, including our own Third Person, are things you fetch from the in-game downloader. Bundling them would make the manager a package with favourites, which is the opposite of discovery. DECIDED (2026-07-28 07:26:00)
 
 ## ACT 0 · Recon & foundation (COMPLETE)
 - ✅ **Identify the game stack** — Unity 2022.3.38f1, IL2CPP, Mirror + FizzySteamworks (host-authoritative), no anti-cheat. DONE (2026-07-27 16:52:00)
@@ -56,7 +57,8 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **A screenshot for the README** — the README currently describes the MODS page in prose.
 
 ## ACT 5 · Mod downloader (NOT STARTED)
-- ⬜ **Browse available mods in-game** — merged BAPHub + our own manifest, showing Installed / Install / Update.
+- ⬜ **Design the catalog format** — `dist/manifest.json` is now strictly the *installer payload* (manager only). The downloader needs a separate **catalog** of available mods. First customer: our own Third Person, which is hosted in `dist/` but deliberately not installed. Getting this right is what makes the modkit a platform instead of a bundle.
+- ⬜ **Browse available mods in-game** — merged BAPHub + our own catalog, showing Installed / Install / Update.
 - ⬜ **Install from GitHub** — download, verify sha256 from the manifest, write to `Mods/`, prompt restart.
 - ⬜ **Uninstall from in-game** — remove the DLL, with an option to keep or delete its settings.
 - ⬜ **Decide Boss Rush handling** — those 4 mods need a different game build; show with a warning or hide.
@@ -80,6 +82,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **Settings search** — Hidden Dev Arguments alone exposes 60 keys; a filter box would help.
 
 ## Changelog
+- **2026-07-28 07:26:00** — Third Person unbundled from the installer. `dist/manifest.json` is now the installer payload only (the manager); the Third Person DLL stays hosted in `dist/` as the downloader's first real catalog entry. The modkit installs a manager, not a mod bundle.
 - **2026-07-28 07:21:00** — Distribution act mostly closed. Sources consolidated into the repo (working copies retired, symlinked back), README/LICENSE/settings-schema written, both installers built with sha256 verification and optional MelonLoader install, and the repo pushed private as `ItsKarlin/bapbap-modkit`. Found and logged the Third Person ini-migration bug while checking the docs were truthful.
 - **2026-07-28 04:28:06** — Roadmap initialized. Captures the full first build session: recon, manager, settings system, Third Person mod, and the open distribution/downloader work.
 - **2026-07-28 04:26:00** — Nav-bar highlight investigation closed. A/B dump of two simultaneously lit tabs showed the only readable difference was label alpha; matched that and accepted the remaining visual gap.

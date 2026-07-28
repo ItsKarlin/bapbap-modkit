@@ -1,10 +1,13 @@
 <#
 .SYNOPSIS
-    Installs the BAPBAP mod manager and Third Person mod.
+    Installs the BAPBAP mod manager.
 
 .DESCRIPTION
-    Finds your BAPBAP install, checks MelonLoader is present, then downloads the mod DLLs
-    and verifies each one against the sha256 in the repo manifest before writing it.
+    Finds your BAPBAP install, checks MelonLoader is present, then downloads what the repo
+    manifest lists and verifies each file against its sha256 before writing it.
+
+    This installs the manager only. Individual mods are meant to be fetched from the in-game
+    downloader, so dist/manifest.json deliberately lists just the manager.
 
     Nothing is installed unless the hash matches.
 

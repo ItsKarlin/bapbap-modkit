@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Installs the BAPBAP mod manager and Third Person mod (Linux / Proton).
+# Installs the BAPBAP mod manager (Linux / Proton).
+#
+# This installs the manager only. Individual mods are meant to be fetched from the in-game
+# downloader, so anything listed in dist/manifest.json is deliberately just the manager.
 #
 #   curl -fsSL https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/install/install.sh | bash
 #
