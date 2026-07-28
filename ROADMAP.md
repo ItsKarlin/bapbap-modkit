@@ -59,7 +59,11 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **A screenshot for the README** — the README currently describes the MODS page in prose.
 
 ## ACT 5 · Mod downloader (NOT STARTED)
-- ⬜ **Design the catalog format** — `dist/manifest.json` is now strictly the *installer payload* (manager only). The downloader needs a separate **catalog** of available mods. First customer: our own Third Person, which is hosted in `dist/` but deliberately not installed. Getting this right is what makes the modkit a platform instead of a bundle.
+- ✅ **Design the catalog format** — `docs/catalog-schema.md`, plus real data at `catalog/catalog.json` and a per-version manifest. Mirrors BAPHub's `channels/release/` layout so one parser reads both and our packages could publish through their launcher unchanged. Two levels: browse costs one request, install costs one more. DONE (2026-07-28 08:06:00)
+- ✅ **Boss Rush question answered** — BAPHub packages already carry `requirements[]` with `type`/`text`/`severity`. Render it generically and show those mods with a warning rather than hiding them. No per-mod hardcoding. DONE (2026-07-28 08:06:00)
+- ✅ **Uninstall question answered** — remove only the files in `version.json`; keep `UserData/<Mod>.ini` by default so reinstalling restores settings. Deleting settings is a separate explicit action. DONE (2026-07-28 08:06:00)
+- ⬜ **A real JSON parser** — blocker for everything below. `ModSettings.JsonValue`/`SplitObjects` finds the first `"key"` by string search inside a brace-split chunk, so BAPHub's nested `authors[]`/`requirements[]` would have an author's `id` read as the package `id`. Needs a small tokenizing parser (no library — IL2CPP).
+- ⬜ **Path safety on install** — `targetPath` comes from remote data. Reject `..` and any drive/root prefix before writing; stage and verify every file in a package before moving any into place.
 - ⬜ **Browse available mods in-game** — merged BAPHub + our own catalog, showing Installed / Install / Update.
 - ⬜ **Install from GitHub** — download, verify sha256 from the manifest, write to `Mods/`, prompt restart.
 - ⬜ **Uninstall from in-game** — remove the DLL, with an option to keep or delete its settings.

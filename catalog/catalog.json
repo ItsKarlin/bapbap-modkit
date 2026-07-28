@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "sourceId": "modkit",
+  "displayName": "Modkit",
+  "baseUrl": "https://raw.githubusercontent.com/ItsKarlin/bapbap-modkit/main/",
+  "packages": [
+    {
+      "id": "itskarlin.bapbap.third-person",
+      "name": "BAPBAP Third Person",
+      "summary": "Third-person camera on F1, with a pointer for card picks.",
+      "author": "ItsKarlin",
+      "scope": "client",
+      "latestVersion": "1.0.1",
+      "tags": ["camera", "client"],
+      "versionManifestPath": "catalog/itskarlin.bapbap.third-person/1.0.1/version.json"
+    }
+  ]
+}
