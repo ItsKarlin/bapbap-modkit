@@ -45,6 +45,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ✅ **Pointer for cards and menus** — own overlay canvas at sortingOrder 30000, above menus, never eats clicks. DONE (2026-07-28 01:20:00)
 - ✅ **Crosshair hidden** during play. DONE (2026-07-28 01:05:00)
 - ✅ **Camera settings** — FOV, sensitivity, height, pitch, live-reloaded from the ini. DONE (2026-07-28 03:10:00)
+- ✅ **v1.0.1 — ini migration** — an ini from an older build now gains keys added since, values preserved. Verified offline against the real stale ini with a 15-check probe (migration, idempotency, edited-values-survive, up-to-date-file-untouched, absent-file-creates-default) before deploying. Awaiting in-game confirmation. DONE (2026-07-28 07:30:00)
 
 ## ACT 4 · Distribution (IN PROGRESS)
 - ✅ **Consolidate sources** — `~/game-mods/` working copies retired to `~/game-mods/retired-worktrees/` and replaced with symlinks into the repo. Both projects verified building from `src/`. DONE (2026-07-28 07:12:00)
@@ -70,7 +71,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **Shuffle** — auto-randomize map and gamemode between rounds.
 
 ## Known issues / accepted compromises
-- 🐞 **Third Person never migrates an existing ini.** `Save()` only runs when the file is missing, so an ini written before the camera settings existed never gains `FovMultiplier`, `Sensitivity`, `CameraHeight` or `CameraPitch` — and the manager, which reads the ini, therefore cannot show them. Anyone who installed before 2026-07-28 03:10 is affected, including this machine. Workaround in the README (delete the ini). **Fix: after parsing, rewrite the file if any known key was absent.** Found 2026-07-28 07:14:00.
+- ✅ **~~Third Person never migrates an existing ini~~** — `Save()` only ran when the file was missing, so an ini written before the camera settings existed never gained `FovMultiplier`, `Sensitivity`, `CameraHeight` or `CameraPitch`, and the manager (which reads the ini) could not show them. Anyone who installed before 2026-07-28 03:10 was affected, including this machine. Found 2026-07-28 07:14:00. FIXED in v1.0.1 — `Load()` now records which keys it saw and rewrites once if any are absent, keeping every parsed value. DONE (2026-07-28 07:30:00)
 - ⚠️ **Nav-bar highlight is dimmer than the game's** — 10+ attempts. A/B dump of two lit tabs proved every readable property is identical (all UberSDF layers, colours, components); the difference is internal SDF shader state with no accessible handle. Accepted.
 - ⚠️ **The previously selected tab keeps its blue marker** while the MODS page is open. Closing the game's page was verified in the log to NOT clear it, and risked a blank lobby, so it was reverted.
 - ⚠️ **Residual stutter, roughly one spike every two minutes** — user-accepted. Arena Random Chars / Asset Dumper / More Custom Settings were never isolated individually; Hidden Dev Arguments is tunable via its ini.
@@ -82,6 +83,7 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **Settings search** — Hidden Dev Arguments alone exposes 60 keys; a filter box would help.
 
 ## Changelog
+- **2026-07-28 07:30:00** — Third Person v1.0.1 fixes the ini-migration bug: `Load()` tracks which keys it saw and rewrites once if any known key is absent, preserving parsed values. Guarded against a rewrite loop (the 2s config watcher would have amplified it) by keeping `KnownKeys` exactly in sync with what `Save()` writes. Verified with an offline probe against the real stale ini, 15 checks, all passing.
 - **2026-07-28 07:26:00** — Third Person unbundled from the installer. `dist/manifest.json` is now the installer payload only (the manager); the Third Person DLL stays hosted in `dist/` as the downloader's first real catalog entry. The modkit installs a manager, not a mod bundle.
 - **2026-07-28 07:21:00** — Distribution act mostly closed. Sources consolidated into the repo (working copies retired, symlinked back), README/LICENSE/settings-schema written, both installers built with sha256 verification and optional MelonLoader install, and the repo pushed private as `ItsKarlin/bapbap-modkit`. Found and logged the Third Person ini-migration bug while checking the docs were truthful.
 - **2026-07-28 04:28:06** — Roadmap initialized. Captures the full first build session: recon, manager, settings system, Third Person mod, and the open distribution/downloader work.

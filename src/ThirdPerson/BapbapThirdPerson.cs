@@ -40,7 +40,7 @@ using Il2CppInterop.Runtime;
 using Il2CppBAPBAP.UI;
 using Il2CppBAPBAP.Debugging;
 
-[assembly: MelonInfo(typeof(BapbapThirdPerson.ThirdPersonMod), "BAPBAP Third Person", "1.0.0", "ItsKarlin")]
+[assembly: MelonInfo(typeof(BapbapThirdPerson.ThirdPersonMod), "BAPBAP Third Person", "1.0.1", "ItsKarlin")]
 [assembly: MelonGame(null, "BAPBAP")]
 
 namespace BapbapThirdPerson
@@ -422,6 +422,8 @@ namespace BapbapThirdPerson
                     return config;
                 }
 
+                var seen = new HashSet<string>(StringComparer.Ordinal);
+
                 foreach (string raw in File.ReadAllLines(path))
                 {
                     string line = raw.Trim();
@@ -432,6 +434,7 @@ namespace BapbapThirdPerson
 
                     string key = line.Substring(0, eq).Trim();
                     string value = line.Substring(eq + 1).Trim();
+                    seen.Add(key);
 
                     switch (key)
                     {
@@ -469,6 +472,28 @@ namespace BapbapThirdPerson
                             break;
                     }
                 }
+
+                // An ini written by an older build is missing whatever keys were added since.
+                // Nothing would ever put them back — Save() only runs when the file is absent —
+                // so those settings stay invisible to the mod manager, which reads this file.
+                // Rewrite once, keeping every value we just parsed, to fill in the gaps.
+                var missing = new List<string>();
+                foreach (string k in KnownKeys)
+                    if (!seen.Contains(k)) missing.Add(k);
+
+                if (missing.Count > 0)
+                {
+                    try
+                    {
+                        Save(config, path);
+                        log.Msg($"Config updated with {missing.Count} setting(s) added since it was written: {string.Join(", ", missing)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Not fatal: the parsed values are still good for this session.
+                        log.Warning($"Could not add the missing settings to the config ({ex.Message}).");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -478,6 +503,16 @@ namespace BapbapThirdPerson
             return config;
         }
 
+        /// Every key Save() writes. Used to spot an ini from an older build.
+        private static readonly string[] KnownKeys =
+        {
+            "ToggleKey", "PointerEnabled", "HideCrosshair", "PointerSize", "PointerSortingOrder",
+            "FovMultiplier", "Sensitivity", "CameraHeight", "CameraPitch"
+        };
+
+        /// Keep KnownKeys in sync with every key written here. A key listed there but not
+        /// written here would look permanently missing, and Load() would rewrite the file on
+        /// every read — which the 2-second config watcher would turn into a rewrite loop.
         private static void Save(Config config, string path)
         {
             var sb = new StringBuilder();

@@ -122,11 +122,6 @@ Windows hasn't been verified. All of this was built and tested on Linux under Pr
 Experimental. The code doesn't do anything platform-specific and the installer handles Windows
 paths, but nobody has actually run it on Windows yet.
 
-If you installed Third Person before the camera settings existed, they won't show up in the
-manager. The mod only writes its ini when the file is missing, so an older ini never gains the
-newer keys. Delete `UserData/BAPBAPThirdPerson.ini` and relaunch to regenerate it, which resets
-your values.
-
 The MODS button is dimmer than the game's own nav tabs. The game's tab highlight lives in
 internal SDF shader state with no handle to reach it — dumping two lit tabs side by side showed
 every readable property identical. It's cosmetic and it's staying that way.
