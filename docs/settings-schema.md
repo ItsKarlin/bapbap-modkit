@@ -42,25 +42,25 @@ written back to `UserData/<YourAssemblyName>.ini`.
 ```json
 [
   {
-    "key": "FovMultiplier",
-    "label": "Field of view",
-    "description": "Multiplies the camera FOV. 1.0 is the game default.",
+    "key": "SpawnMultiplier",
+    "label": "Spawn rate",
+    "description": "Multiplies how many enemies spawn. 1.0 is the game default.",
     "type": "float",
-    "min": 0.3,
-    "max": 3.0,
-    "step": 0.05,
-    "scope": "client"
+    "min": 0.5,
+    "max": 4.0,
+    "step": 0.1,
+    "scope": "host"
   },
   {
-    "key": "HideCrosshair",
-    "label": "Hide crosshair",
-    "description": "Hides the game's centre crosshair while third person is active.",
+    "key": "ShowTimer",
+    "label": "Show round timer",
+    "description": "Draws a countdown in the corner of your screen.",
     "type": "bool",
     "scope": "client"
   },
   {
-    "key": "ShowFormat",
-    "label": "HP display format",
+    "key": "DisplayFormat",
+    "label": "Timer format",
     "type": "text",
     "scope": "client"
   }
@@ -117,8 +117,8 @@ descriptor is independent of this and does work.
 
 ```
 <BAPBAP>/UserData/
-    BAPBAPThirdPerson.ini             <- your values (you own this file)
-    BAPBAPThirdPerson.settings.json   <- your descriptor (optional)
+    YourMod.ini             <- your values (you own this file)
+    YourMod.settings.json   <- your descriptor (optional)
 ```
 
 The stem must match your **assembly name** (the DLL filename without `.dll`), not your
