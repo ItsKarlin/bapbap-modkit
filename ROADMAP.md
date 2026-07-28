@@ -85,7 +85,9 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⬜ **Decide Boss Rush handling** — those 4 mods need a different game build; show with a warning or hide.
 
 ## ACT 6 · Gameplay mods (DESIGNED, NOT BUILT)
-- ⬜ **Round Mutators** — unlock the devs' 16 built-in `GM_*` modifiers (AllGigantic, MeteorShower, NightTime, XCOM…) in normal lobbies. IDs 0–15 already captured. The highest-value idea on the list.
+- 🔄 **Round Mutators** — unlock the devs' 16 built-in `GM_*` modifiers in normal lobbies. IDs 0–15 captured. **API found in the dump 2026-07-28 (`GameMode.cs`), and it is all public and server-authoritative:** `enableGameModifiers` (gate), `SvAddGameModifier(int)`, `SvRemoveGameModifier(int)`, `InitializeGameModifiersMatchMaking(int[])`, with `RpcAddGameModifier` replicating to clients. No Harmony patch, no reimplemented effects, no touching `devLobbyGameModifierPool` — the host sets them and the game syncs everyone, so guests still install nothing.
+  **Spec agreed:** host scope, assembly `BAPBAPRoundMutators`, id `itskarlin.bapbap.round-mutators`. Everything configurable — `SelectionMode` (PerRound/Match/Escalating), `MaxActive`, `Announce`, plus one pool toggle per modifier generated from the ID list rather than typed out.
+  **Next: a probe, not the mod.** Confirm the game accepts `SvAddGameModifier` outside a dev lobby before building anything on it.
 - ⬜ **Escalating Chaos** — `augmentsPerRound` climbs each round.
 - ⬜ **Item Roulette** — random allowed-item subset per round via `serializedSettings`.
 - ⬜ **Shuffle** — auto-randomize map and gamemode between rounds.
@@ -95,6 +97,9 @@ END GOAL: A public, self-serve BAPBAP mod platform — an in-game manager that d
 - ⚠️ **Nav-bar highlight is dimmer than the game's** — 10+ attempts. A/B dump of two lit tabs proved every readable property is identical (all UberSDF layers, colours, components); the difference is internal SDF shader state with no accessible handle. Accepted.
 - ⚠️ **The previously selected tab keeps its blue marker** while the MODS page is open. Closing the game's page was verified in the log to NOT clear it, and risked a blank lobby, so it was reverted.
 - ⚠️ **Residual stutter, roughly one spike every two minutes** — user-accepted. Arena Random Chars / Asset Dumper / More Custom Settings were never isolated individually; Hidden Dev Arguments is tunable via its ini.
+
+### Blocked on a schema gap
+- ⬜ **Enum settings** — `SelectionMode` is one of three values, but the settings system only makes bools and numbers editable in-game; text renders read-only. Either Round Mutators ships three awkward bools, or `<ModDll>.settings.json` gains an enum type with an options list. The enum helps every future mod.
 
 ## Claude's Roadmap (my ideas for the future)
 - ⬜ **Mod profiles** — save/load whole sets of enabled mods and settings, e.g. "chaos night" vs "vanilla-ish".
