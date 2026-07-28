@@ -49,9 +49,15 @@ affected — so keep them to private lobbies with people who agreed to it.
 ## Writing mods
 
 Your mod appears in the manager with no work from you. If it writes
-`UserData/<YourAssembly>.ini` as `key=value` lines, those settings become editable in-game
-automatically. For proper labels, ranges and scope, add a `<YourAssembly>.settings.json` —
-see [docs/settings-schema.md](docs/settings-schema.md).
+`UserData/<YourAssembly>.ini` as plain `key=value` lines, its settings become editable in-game
+automatically — on/off switches, sliders for numbers, and rebindable keys.
+
+The one case inference can't handle is a setting that's one of a few fixed words, like
+`Quality=Aggressive`. Add an `options` list for it and the manager renders a tap-to-cycle picker
+instead of read-only text. Same file also gets you proper labels, slider ranges, and host/client
+scope so the manager knows what's safe to change mid-match.
+
+**→ [docs/settings-schema.md](docs/settings-schema.md)**
 
 ## Building
 

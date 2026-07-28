@@ -3,6 +3,11 @@
 The mod manager can edit **any** MelonLoader mod's settings in-game, with no code written for
 that specific mod. There are two levels of support, and you get the first one for free.
 
+**The short version:** write a normal `key=value` ini and switches, sliders and keybinds work
+immediately. If you have a setting that's one of a few fixed words, add an `options` list so it
+becomes a tap-to-cycle picker instead of read-only text. That's the only thing you have to do by
+hand.
+
 ## Level 1 — do nothing (automatic)
 
 If your mod writes a config file at `UserData/<YourAssemblyName>.ini` in plain `key=value`
@@ -20,8 +25,13 @@ Type inference:
 | Value looks like | Control | Notes |
 |---|---|---|
 | `True` / `False` (any case) | Toggle switch | |
-| A number | Slider | Range derived from the current value — see below |
-| Anything else | Read-only text | The manager will not guess at a string's valid values |
+| A number | Slider with −/+ | Range derived from the current value — see below |
+| A key name, on a key-ish setting | Rebind button | e.g. `ToggleKey=F1`. Tap, press a key, Escape cancels |
+| Anything else | Read-only text | The manager cannot guess what values are valid — **add an `options` list and it becomes a picker** |
+
+So a mod that writes a plain ini already gets working switches, sliders and rebindable keys with
+no descriptor at all. The one thing inference cannot do is know which words are valid for a
+setting like `ShowFormat=HpOverMax` — that needs one line from you, below.
 
 Keys are humanised for display: `EnableHpNumbers` becomes "Enable hp numbers". Lines starting
 with `#` and lines without an `=` are skipped.
