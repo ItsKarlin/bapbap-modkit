@@ -57,6 +57,62 @@ namespace BapbapMods.Manager
             }
             catch { return false; }
         }
+
+        /// Key-triggered dump of what the settings window actually looks like right now.
+        /// Written because two hypotheses about why the Mods panel renders empty were both
+        /// wrong; guessing a third time is more expensive than measuring once.
+        public void DumpState(MelonLogger.Instance log)
+        {
+            if (log == null) return;
+            log.Msg("---- settings dump ----");
+
+            try
+            {
+                log.Msg($"contentParent={(_contentParent == null ? "NULL" : _contentParent.name)} " +
+                        $"active={(_contentParent != null && _contentParent.gameObject.activeInHierarchy)}");
+
+                if (_contentParent != null)
+                {
+                    for (int i = 0; i < _contentParent.childCount; i++)
+                    {
+                        var child = _contentParent.GetChild(i);
+                        var cg = child.GetComponent<CanvasGroup>();
+                        log.Msg($"  panel[{i}] '{child.name}' active={child.gameObject.activeSelf}" +
+                                $"/{child.gameObject.activeInHierarchy} children={child.childCount}" +
+                                $" alpha={(cg == null ? "n/a" : cg.alpha.ToString("0.00"))}");
+                    }
+                }
+
+                log.Msg($"our panel={(_panel == null ? "NULL" : _panel.name)}");
+                if (_panel != null)
+                {
+                    var cg = _panel.GetComponent<CanvasGroup>();
+                    var rt = _panel.GetComponent<RectTransform>();
+                    log.Msg($"  active={_panel.activeSelf}/{_panel.activeInHierarchy}" +
+                            $" children={_panel.transform.childCount}" +
+                            $" alpha={(cg == null ? "n/a" : cg.alpha.ToString("0.00"))}" +
+                            $" size={(rt == null ? "n/a" : rt.rect.size.ToString())}" +
+                            $" pos={(rt == null ? "n/a" : rt.anchoredPosition.ToString())}");
+
+                    for (int i = 0; i < _panel.transform.childCount && i < 6; i++)
+                    {
+                        var child = _panel.transform.GetChild(i);
+                        var childRt = child.GetComponent<RectTransform>();
+                        log.Msg($"    child[{i}] '{child.name}' active={child.gameObject.activeSelf}" +
+                                $" size={(childRt == null ? "n/a" : childRt.rect.size.ToString())}");
+                    }
+
+                    var canvas = _panel.GetComponentInParent<Canvas>();
+                    log.Msg($"  canvas={(canvas == null ? "NULL" : canvas.name + " order=" + canvas.sortingOrder)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                log.Error($"settings dump failed: {ex}");
+            }
+
+            log.Msg("---- end settings dump ----");
+        }
         private readonly List<GameObject> _otherPanels = new List<GameObject>();
         private GameObject _panelOnOpen;
 

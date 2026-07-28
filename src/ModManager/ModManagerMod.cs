@@ -158,6 +158,15 @@ namespace BapbapMods.Manager
 
             if (Input.GetKeyDown(CatalogProbeKey)) RunCatalogProbe();
 
+            // F7: dump the settings window's real state. Key-triggered, so it costs nothing
+            // until asked.
+            if (Input.GetKeyDown(KeyCode.F7))
+            {
+                _settingsTab.DumpState(LoggerInstance);
+                LoggerInstance.Msg($"[{ExperimentId}] our page: built={_nativePage.Built} " +
+                                   $"visible={_nativePage.Visible} panelOpen={_panelOpen}");
+            }
+
             // Our page covers the lobby, so it must never share the screen with the game's
             // settings window — the two overlap and the settings panel reads as broken.
             if (_panelOpen && _settingsTab.IsWindowOpen())
