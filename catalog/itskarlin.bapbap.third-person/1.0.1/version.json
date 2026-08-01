@@ -4,7 +4,7 @@
   "version": "1.0.1",
   "files": [
     {
-      "sourcePath": "dist/BAPBAPThirdPerson.dll",
+      "sourcePath": "BAPBAPThirdPerson.dll",
       "targetPath": "Mods/BAPBAPThirdPerson.dll",
       "sha256": "72f9a2afbf4accadf5bde36f8c741e95a8fd1ba2c7a2d5f5f9697ca88ca4fda0",
       "description": "Main mod dll"

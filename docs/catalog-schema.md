@@ -67,7 +67,7 @@ scope and are listed under **Unrecognised**, exactly like an unrecognised instal
   "version": "1.0.1",
   "files": [
     {
-      "sourcePath": "dist/BAPBAPThirdPerson.dll",
+      "sourcePath": "BAPBAPThirdPerson.dll",
       "targetPath": "Mods/BAPBAPThirdPerson.dll",
       "sha256": "72f9a2af…",
       "description": "Main mod dll"
@@ -76,8 +76,13 @@ scope and are listed under **Unrecognised**, exactly like an unrecognised instal
 }
 ```
 
-`sourcePath` resolves against `baseUrl`; `targetPath` is relative to the game folder and **must**
-stay inside it — reject any path containing `..` or a drive/root prefix before writing. A catalog
+`sourcePath` resolves against **the folder `version.json` itself lives in**, not against `baseUrl`
+— that is what BAPHub does, and the manager matches it. So ship the dll beside the manifest, at
+`catalog/<id>/<version>/<file>.dll`, and keep `sourcePath` a bare filename. Pointing it at the
+repo's `dist/` gives a 404 on download; `dist/` is the latest build and would break older versions
+anyway on the next one.
+
+`targetPath` is relative to the game folder and **must** stay inside it — reject any path containing `..` or a drive/root prefix before writing. A catalog
 is remote data, so treat it as untrusted.
 
 Every file is sha256-verified before anything is written, and all files in a package are staged

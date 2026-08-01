@@ -62,13 +62,17 @@ ok "$SIZE bytes"
 step "Writing catalog/$ID/$VERSION/version.json"
 VDIR="$REPO_ROOT/catalog/$ID/$VERSION"
 mkdir -p "$VDIR"
+# The manager resolves sourcePath against the version.json's own folder, so the dll has to sit
+# beside it. dist/ is the latest build and gets overwritten; this copy is the frozen 1.0.1 users
+# actually download, which is why old versions keep working after the next build.
+cp -f "$DIST/$FILE" "$VDIR/$FILE"
 python3 - "$VDIR/version.json" "$ID" "$VERSION" "$FILE" "$SHA" <<'PY'
 import json,sys
 path,pkg,ver,fname,sha = sys.argv[1:6]
 json.dump({
     "schemaVersion": 1, "id": pkg, "version": ver,
     "files": [{
-        "sourcePath": f"dist/{fname}",
+        "sourcePath": fname,
         "targetPath": f"Mods/{fname}",
         "sha256": sha,
         "description": "Main mod dll",
@@ -105,14 +109,17 @@ PY
 
 step "Validating"
 python3 -c "
-import json,sys
+import json,os,sys
 cat=json.load(open('$CATALOG'))
 vm=json.load(open('$VDIR/version.json'))
 entry=next(p for p in cat['packages'] if p['id']=='$ID')
 assert entry['versionManifestPath']=='catalog/$ID/$VERSION/version.json', 'manifest path mismatch'
+src=vm['files'][0]['sourcePath']
+assert '/' not in src, 'sourcePath must be a bare filename beside version.json'
+assert os.path.isfile(os.path.join('$VDIR', src)), 'sourcePath does not exist beside version.json'
 assert vm['files'][0]['sha256']=='$SHA', 'hash mismatch'
 assert vm['files'][0]['targetPath'].startswith('Mods/'), 'targetPath must be under Mods/'
-print('    catalog.json and version.json agree')
+print('    catalog.json and version.json agree, and the dll is where the manager will look')
 "
 
 echo
